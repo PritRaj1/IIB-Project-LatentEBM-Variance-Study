@@ -14,7 +14,7 @@ This repository is dedicated as a platform for my Master's thesis on deep genera
 
 * For information regarding my day-to-day progress, please refer to [my logbook](https://github.com/PritRaj1/IIB-Project-LatentEBM-Variance-Study/blob/main/DOCUMENTATION/LOGBOOK.ipynb), which is being kept as a requirement for the CUED IIB project.
 
-* The theoretical concepts leveraged by this repository have been supported with reference material within the documentation provided. The code has been written and modularised by me, (Prithvi), as is demonstrated by the painstaking, statistical troubleshooting process laid out in the [logbook]([url](https://github.com/PritRaj1/IIB-Project-LatentEBM-Variance-Study/blob/main/DOCUMENTATION/LOGBOOK.ipynb)https://github.com/PritRaj1/IIB-Project-LatentEBM-Variance-Study/blob/main/DOCUMENTATION/LOGBOOK.ipynb).
+* The theoretical concepts leveraged by this repository have been supported with reference material within the documentation provided. The code has been written and modularised by me, (Prithvi), as is demonstrated by the painstaking, statistical troubleshooting process laid out in the [logbook]([url](https://github.com/PritRaj1/IIB-Project-LatentEBM-Variance-Study/blob/main/DOCUMENTATION/LOGBOOK.ipynb)https://github.com/PritRaj1/IIB-Project-LatentEBM-Variance-Study/blob/main/DOCUMENTATION/LOGBOOK.ipynb). Go easy on me - I am still learning!
 
 ## Breakdown of subfolders
 
