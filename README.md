@@ -5,10 +5,6 @@
 * Affiliation: University of Cambridge, Computational Statistics & Machine Learning Group
 
 **The project is currently in a very early stage! I have publicized it to explain my current proficiency in PyTorch for job applications.**
-
-<span style="color:red"><strong>Important Note:</strong></span> This text is highlighted for emphasis.
-
-
  
 ## Introduction
 
