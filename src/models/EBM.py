@@ -16,24 +16,25 @@ class tiltedpriorEBM(nn.Module):
     - forward(z): computes the energy of the input z
     - grad_log_fn(z, x, model): computes the gradient of the log posterior: log[p(x | z) * p(z)] w.r.t. z
     """
-    def __init__(self, input_dim, output_dim, p0_sigma, langevin_steps=20, langevin_s=0.4):
+    def __init__(self, input_dim, feature_dim, output_dim, p0_sigma, langevin_steps=20, langevin_s=0.4):
         super().__init__()
         
         self.s = langevin_s 
         self.K = langevin_steps 
         self.p0_sigma = p0_sigma # Standard deviation of z0, the initial prior distribution
+        self.output_dim = output_dim
         
         self.layers = nn.Sequential(
-                    nn.Linear(input_dim, 256), 
+                    nn.Linear(input_dim, feature_dim), 
                     nn.ReLU(),
-                    nn.Linear(256, 128),
+                    nn.Linear(feature_dim, feature_dim),
                     nn.ReLU(),
-                    nn.Linear(128, output_dim),
+                    nn.Linear(feature_dim, output_dim),
                 )
             
     def forward(self, z):
         # Returns f_a(z)
-        return self.layers(z)
+        return self.layers(z.squeeze()).view(-1, self.output_dim, 1, 1)
     
     def grad_log_fn(self, z, x, model):
         

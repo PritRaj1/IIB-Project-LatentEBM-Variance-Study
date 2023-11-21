@@ -40,13 +40,13 @@ class langevin_sampler():
         while step < model.K:
             # Compute gradient
             grad = model.grad_log_fn(x_k, data, EBMmodel)
-            
+
             # Update sample
             x_k = x_k + (model.s * model.s * grad) + (torch.sqrt(torch.tensor(2)) * model.s * torch.randn_like(x_k, device=self.device))  
 
             step += 1             
         
-        return x_k
+        return x_k.detach()
     
     def sample_p0(self):
         """
@@ -55,4 +55,4 @@ class langevin_sampler():
         Returns:
             z0: A normally distributed variable
         """
-        return self.p0_sigma * torch.randn(self.batch_size, self.num_z, device=self.device, requires_grad=True)
+        return self.p0_sigma * torch.randn(*[self.batch_size, self.num_z, 1, 1], device=self.device, requires_grad=True)

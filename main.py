@@ -14,19 +14,26 @@ from src.models.GEN import topdownGenerator
 from src.MCMC_Samplers.langevin import langevin_sampler
 from src.loss_functions.EBM_loss_fn import EBM_loss
 from src.loss_functions.GEN_loss_fn import generator_loss
-from src.pipeline import train_step, generate_sample
+from src.pipeline import train_step, generate_sample, save_final_sample
+from src.utils.diagnostics import plot_hist, plot_pdf
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Hyperparameters
-NUM_EPOCHS = 200
+NUM_EPOCHS = 300
 BATCH_SIZE = 32
 
-Z_SAMPLES = 4
 
-E_LR = 0.0002
-G_LR = 0.001
+Z_SAMPLES = 100 # Size of latent Z vector
+EMB_OUT_SIZE = 1 # Size of output of EBM
+GEN_OUT_CHANNELS = 3 # Size of output of GEN
+GEN_FEATURE_DIM = 64 # Feature dimensions of generator
+EBM_FEATURE_DIM = 200 # Feature dimensions of EBM
+
+
+E_LR = 0.00002
+G_LR = 0.0001
 
 E_STEP = 0.2
 G_STEP = 0.1
@@ -34,12 +41,13 @@ G_STEP = 0.1
 E_SAMPLE_STEPS = 80
 G_SAMPLE_STEPS = 80
 
-p0_SIGMA = 0.3
-GENERATOR_SIGMA = 0.1
+p0_SIGMA = 1
+GENERATOR_SIGMA = 0.3
 
 SAMPLE_BREAK = NUM_EPOCHS // 10
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+print(device)
 
 # Hyperparameters
 NUM_EPOCHS = 100
@@ -65,15 +73,17 @@ Sampler = langevin_sampler(
 
 EBMnet = tiltedpriorEBM(
     input_dim=Z_SAMPLES, 
-    output_dim=Z_SAMPLES, 
+    feature_dim=EBM_FEATURE_DIM,
+    output_dim=EMB_OUT_SIZE, 
     p0_sigma=p0_SIGMA, 
     langevin_steps=E_SAMPLE_STEPS, 
     langevin_s=E_STEP
 ).to(device)
 
 GENnet = topdownGenerator(
-    input_dim=Z_SAMPLES, 
-    output_dim=data_dim, 
+    input_dim=Z_SAMPLES,
+    feature_dim=GEN_FEATURE_DIM, 
+    output_dim=GEN_OUT_CHANNELS, 
     lkhood_sigma=GENERATOR_SIGMA, 
     langevin_steps=G_SAMPLE_STEPS, 
     langevin_s=G_STEP
@@ -100,7 +110,7 @@ with torch.profiler.profile(
         GENtotal_loss = 0
 
         for batch_idx, (batch, _) in enumerate(loader): 
-            x = batch.view(-1, data_dim).to(device)
+            x = batch.to(device)
 
             lossE, lossG = train_step(
                 x, 
@@ -129,17 +139,12 @@ with torch.profiler.profile(
 
 writer.close()
 
-# Save the final image as png
-import matplotlib.pyplot as plt
+save_final_sample(generated_data, hyperparams=[NUM_EPOCHS, p0_SIGMA, GENERATOR_SIGMA])
 
-# Save the last generated sample as a PNG image
-last_sample = generated_data[-1].cpu().detach().numpy()
-plt.imshow(last_sample[0], cmap='gray')
-plt.axis('off')
 
-# Add title with hyperparameters
-title = f"EPOCHS={NUM_EPOCHS}, p0_SIGMA={p0_SIGMA}, GEN_SIGMA={GENERATOR_SIGMA}"
-plt.title(title)
+plot_hist(Sampler, EBMnet, GENnet, x)
+Sampler.batch_size = 500
+X = train_dataset.data[:500].to(device).view(-1, data_dim)
+plot_pdf(Sampler, EBMnet, GENnet, X.float(), data_dim)
 
-plt.savefig('Images/Final Vanilla Pang Sample.png')
 

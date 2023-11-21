@@ -1,9 +1,9 @@
 import torch
+import matplotlib.pyplot as plt
 
 def train_step(x, GENnet, EBMnet, GENoptimiser, EBMoptimiser, Sampler, lossG, lossE):       
     # 1a. Sample from latent prior p0(z)
     z0 = Sampler.sample_p0()
-    
     zK_EBM = Sampler.get_sample(z0, None, EBMnet, None)
     zK_GEN = Sampler.get_sample(z0, x, GENnet, EBMnet)
     
@@ -25,8 +25,21 @@ def train_step(x, GENnet, EBMnet, GENoptimiser, EBMoptimiser, Sampler, lossG, lo
 
 def generate_sample(Sampler, GENnet, EBMnet):
     z = Sampler.sample_p0()
-    z_prior = Sampler.get_sample(z, None, EBMnet, None)
+    z_prior = Sampler.get_sample(z, None, EBMnet, None).unsqueeze(1).unsqueeze(1)
     with torch.no_grad():
         x_pred = GENnet(z_prior) 
     
     return x_pred
+
+def save_final_sample(final_x, hyperparams):
+    
+    # Save the last generated sample as a PNG image
+    last_sample = final_x[-1].cpu().detach().numpy()
+    plt.imshow(last_sample[0], cmap='gray')
+    plt.axis('off')
+
+    # Add title with hyperparameters
+    title = f"EPOCHS={hyperparams[0]}, p0_SIGMA={hyperparams[1]}, GEN_SIGMA={hyperparams[2]}"
+    plt.title(title)
+
+    plt.savefig('img/Final Vanilla Pang Sample.png')
