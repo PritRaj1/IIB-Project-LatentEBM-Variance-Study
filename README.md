@@ -26,5 +26,5 @@ This repository is dedicated as a platform for my Master's thesis on deep genera
 
 4. **runs:** Contains tensorboard logs for the training runs of the models.
 
-5. **src:** Contains python moduls used in main.py. The code is modularised into different files, each of which is responsible for a different aspect of the project. The code is also heavily commented to make it easier to understand.
+5. **src:** Contains python modules used in main.py. The code is modularised into different files, each of which is responsible for a different aspect of the project. The code is also heavily commented to make it easier to understand.
 
