@@ -4,7 +4,10 @@
 * Supervisors: Mr. Justin Bunker, Prof. Mark Girolami
 * Affiliation: University of Cambridge, Computational Statistics & Machine Learning Group
 
-<span style="color:red"><strong>The project is currently in a very early stage! I have publicised it to explain my current proficiency in any job applications.</strong></span>
+**The project is currently in a very early stage! I have publicized it to explain my current proficiency in PyTorch for job applications.**
+
+<span style="color:red"><strong>Important Note:</strong></span> This text is highlighted for emphasis.
+
 
  
 ## Introduction
