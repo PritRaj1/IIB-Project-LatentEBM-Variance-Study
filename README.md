@@ -3,6 +3,9 @@
 * Author: [Prithvi Raj](pr478@cam.ac.uk)
 * Supervisors: Mr. Justin Bunker, Prof. Mark Girolami
 * Affiliation: University of Cambridge, Computational Statistics & Machine Learning Group
+
+<span style="color:red"><strong>The project is currently in a very early stage! I have publicised it to explain my current proficiency in any job applications.</strong></span>
+
  
 ## Introduction
 
