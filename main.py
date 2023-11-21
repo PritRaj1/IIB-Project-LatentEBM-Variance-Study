@@ -47,7 +47,7 @@ GENERATOR_SIGMA = 0.3
 SAMPLE_BREAK = NUM_EPOCHS // 10
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-print(device)
+print(f"Using {device} for computation.")
 
 # Hyperparameters
 NUM_EPOCHS = 100

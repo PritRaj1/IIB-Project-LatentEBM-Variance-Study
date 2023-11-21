@@ -25,7 +25,7 @@ def train_step(x, GENnet, EBMnet, GENoptimiser, EBMoptimiser, Sampler, lossG, lo
 
 def generate_sample(Sampler, GENnet, EBMnet):
     z = Sampler.sample_p0()
-    z_prior = Sampler.get_sample(z, None, EBMnet, None).unsqueeze(1).unsqueeze(1)
+    z_prior = Sampler.get_sample(z, None, EBMnet, None)
     with torch.no_grad():
         x_pred = GENnet(z_prior) 
     
