@@ -61,7 +61,7 @@ def plot_pdf(Sampler, EBMnet, GENnet, X):
     sns.kdeplot(X_pred2.view(-1).cpu().numpy(), fill=True, cmap='Reds', levels=50, ax=axs[2])
     axs[2].set_title(r"$p_\theta(x|z)$ -- z sampled from $p_\theta(z|x)$")
 
-    plt.title(r'Kernel Density Estimation of Data and Generated Distributions')
+    plt.title(r'Kernel Density Estimation of Data and Generated Pixel Intensities')
 
     # Save the figure as a PNG file
     fig.savefig('img/PDFplot.png')

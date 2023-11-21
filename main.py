@@ -25,23 +25,22 @@ NUM_EPOCHS = 200
 BATCH_SIZE = 32
 
 Z_SAMPLES = 100 # Size of latent Z vector
-EMB_OUT_SIZE = 1 # Size of output of EBM
+EMB_OUT_SIZE = 3 # Size of output of EBM
 GEN_OUT_CHANNELS = 3 # Size of output of GEN
 GEN_FEATURE_DIM = 64 # Feature dimensions of generator
 EBM_FEATURE_DIM = 200 # Feature dimensions of EBM
 
-
-E_LR = 0.00002
-G_LR = 0.0001
+E_LR = 0.0002
+G_LR = 0.001
 
 E_STEP = 0.2
 G_STEP = 0.1
 
-E_SAMPLE_STEPS = 20
-G_SAMPLE_STEPS = 20
+E_SAMPLE_STEPS = 30
+G_SAMPLE_STEPS = 30
 
-p0_SIGMA = 1
-GENERATOR_SIGMA = 0.3
+p0_SIGMA = 0.3
+GENERATOR_SIGMA = 0.1
 
 SAMPLE_BREAK = NUM_EPOCHS // 10
 
