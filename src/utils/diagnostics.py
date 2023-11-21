@@ -4,6 +4,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 def plot_hist(Sampler, EBMnet, GENnet, x):
+    """
+    Function to plot the histograms of the prior and posterior distributions
+
+    Parameters:
+    - Sampler: object used for MCMC sampling
+    - EBMnet: neural network used for energy-based modeling
+    - GENnet: neural network used for generative modeling
+    - x: torch.Tensor of shape (batch_size, 1, 28, 28) containing the images
+    """
     print("Plotting histograms...")
 
     # Sample from the noise prior distribution
@@ -13,7 +22,7 @@ def plot_hist(Sampler, EBMnet, GENnet, x):
     zK_EBM = Sampler.get_sample(z0, None, EBMnet, None)
     zK_GEN = Sampler.get_sample(zK_EBM, x, GENnet, EBMnet)
 
-    # Mean along the final dimension
+    # Mean along the dimension 1
     zK_EBM_mean = torch.mean(zK_EBM, dim=1).squeeze()
     zK_GEN_mean = torch.mean(zK_GEN, dim=1).squeeze()
 
@@ -33,6 +42,15 @@ def plot_hist(Sampler, EBMnet, GENnet, x):
     plt.savefig('img/Histplot.png')
 
 def plot_pdf(Sampler, EBMnet, GENnet, X):
+    """
+    Function to plot the PDFs of the pixel instensities of the real and generated images
+
+    Parameters:
+    - Sampler: object used for MCMC sampling
+    - EBMnet: neural network used for energy-based modeling
+    - GENnet: neural network used for generative modeling
+    - X: torch.Tensor of shape (batch_size, 1, 28, 28) containing the images
+    """
 
     print("Plotting PDFs...")
     # Create a figure with subplots

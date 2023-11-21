@@ -1,7 +1,10 @@
 import torch
 import matplotlib.pyplot as plt
 
-def train_step(x, GENnet, EBMnet, GENoptimiser, EBMoptimiser, Sampler, lossG, lossE):       
+def train_step(x, GENnet, EBMnet, GENoptimiser, EBMoptimiser, Sampler, lossG, lossE):      
+    """
+    Function to perform one training step for the generator and the EBM.
+    """ 
     # 1a. Sample from latent prior p0(z)
     z0 = Sampler.sample_p0()
     zK_EBM = Sampler.get_sample(z0, None, EBMnet, None)
@@ -32,7 +35,9 @@ def generate_sample(Sampler, GENnet, EBMnet):
     return x_pred
 
 def save_final_sample(final_x, hyperparams):
-    
+    """
+    Function to save the last generated sample as a PNG image.
+    """
     # Save the last generated sample as a PNG image
     last_sample = final_x[-1].cpu().detach().numpy()
     plt.imshow(last_sample[0], cmap='gray')
