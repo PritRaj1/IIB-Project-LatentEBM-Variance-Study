@@ -21,9 +21,8 @@ from src.utils.diagnostics import plot_hist, plot_pdf
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Hyperparameters
-NUM_EPOCHS = 300
-BATCH_SIZE = 32
-
+NUM_EPOCHS = 10
+BATCH_SIZE = 256
 
 Z_SAMPLES = 100 # Size of latent Z vector
 EMB_OUT_SIZE = 1 # Size of output of EBM
@@ -38,8 +37,8 @@ G_LR = 0.0001
 E_STEP = 0.2
 G_STEP = 0.1
 
-E_SAMPLE_STEPS = 80
-G_SAMPLE_STEPS = 80
+E_SAMPLE_STEPS = 20
+G_SAMPLE_STEPS = 20
 
 p0_SIGMA = 1
 GENERATOR_SIGMA = 0.3
@@ -48,10 +47,6 @@ SAMPLE_BREAK = NUM_EPOCHS // 10
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using {device} for computation.")
-
-# Hyperparameters
-NUM_EPOCHS = 100
-BATCH_SIZE = 32
 
 # Transforms to apply to dataset. Normalising improves data convergence, numerical stability, and regularisation.
 transform = transforms.Compose([
@@ -62,7 +57,6 @@ transform = transforms.Compose([
 # Load the MNIST dataset
 train_dataset = MNIST(root="dataset/", transform=transform, download=True)
 loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-data_dim = train_dataset[0][0].shape[0] * train_dataset[0][0].shape[1] * train_dataset[0][0].shape[2]
 
 Sampler = langevin_sampler(
     p0_sigma=p0_SIGMA, 
@@ -139,12 +133,13 @@ with torch.profiler.profile(
 
 writer.close()
 
+# Plot the final generated image
 save_final_sample(generated_data, hyperparams=[NUM_EPOCHS, p0_SIGMA, GENERATOR_SIGMA])
 
-
+# Diagnostics
 plot_hist(Sampler, EBMnet, GENnet, x)
-Sampler.batch_size = 500
-X = train_dataset.data[:500].to(device).view(-1, data_dim)
-plot_pdf(Sampler, EBMnet, GENnet, X.float(), data_dim)
+Sampler.batch_size = 100
+X = train_dataset.data[:100].to(device).unsqueeze(1).float()
+plot_pdf(Sampler, EBMnet, GENnet, X.float())
 
 

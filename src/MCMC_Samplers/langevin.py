@@ -46,7 +46,7 @@ class langevin_sampler():
 
             step += 1             
         
-        return x_k.detach()
+        return x_k
     
     def sample_p0(self):
         """

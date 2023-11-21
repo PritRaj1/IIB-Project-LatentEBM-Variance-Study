@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 def plot_hist(Sampler, EBMnet, GENnet, x):
+    print("Plotting histograms...")
+
     # Sample from the noise prior distribution
     z0 = Sampler.sample_p0() 
 
@@ -12,31 +14,30 @@ def plot_hist(Sampler, EBMnet, GENnet, x):
     zK_GEN = Sampler.get_sample(zK_EBM, x, GENnet, EBMnet)
 
     # Mean along the final dimension
-    zK_EBM_mean = torch.mean(zK_EBM, dim=-1)
-    zK_GEN_mean = torch.mean(zK_GEN, dim=-1)
+    zK_EBM_mean = torch.mean(zK_EBM, dim=1).squeeze()
+    zK_GEN_mean = torch.mean(zK_GEN, dim=1).squeeze()
 
     # Create a new figure with subplots
-    fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+    plt.figure(figsize=(12, 6))
 
     # Plot the histograms on the first subplot
     sns.axes_style("darkgrid")
-    sns.histplot(zK_EBM_mean.detach().cpu().numpy(), color='red', kde=True, label=r'$p_\alpha(z)$ from EBM', ax=axs[0])
-    axs[0].set_title('Histogram of $p_\alpha(z)$ from EBM')
+    sns.histplot(zK_EBM_mean.detach().cpu().numpy(), color='red', kde=True, label=r'$p_\alpha(z)$ from EBM')
+    sns.histplot(zK_GEN_mean.detach().cpu().numpy(), color='blue', kde=True, label=r'$p_\theta(z|x)$ from GEN')
 
-    sns.histplot(zK_GEN_mean.detach().cpu().numpy(), color='blue', kde=True, label=r'$p_\theta(z|x)$ from GEN', ax=axs[1])
-    axs[1].set_title('Histogram of $p_\theta(z|x)$ from GEN')
+    plt.title(r'Histogram of prior-posterior matching')
 
     # Add legends and save the figure
-    axs[0].legend()
-    axs[1].legend()
+    plt.legend()
+    plt.legend()
     plt.savefig('img/Histplot.png')
 
-def plot_pdf(Sampler, EBMnet, GENnet, X, data_dim):
-    # Create a figure with subplots
-    fig, axs = plt.subplots(1, 2, figsize=(12, 6))
-    fig.suptitle("Kernel Density Estimation of Generated Distribution")
+def plot_pdf(Sampler, EBMnet, GENnet, X):
 
-    Sampler.batch_size = X.shape[0]
+    print("Plotting PDFs...")
+    # Create a figure with subplots
+    fig, axs = plt.subplots(1, 3, figsize=(18, 6))
+    fig.suptitle("Kernel Density Estimation of Data and Generated Distributions")
 
     # Sample from the prior distribution and plot the results
     z0 = Sampler.sample_p0() 
@@ -45,22 +46,22 @@ def plot_pdf(Sampler, EBMnet, GENnet, X, data_dim):
     zK_EBM = Sampler.get_sample(z0, None, EBMnet, None)
     zK_GEN = Sampler.get_sample(zK_EBM, X, GENnet, EBMnet)
 
-    X_pred1 = GENnet(zK_EBM.detach())
-    X_pred2 = GENnet(zK_GEN.detach())
+    with torch.no_grad():
+        X_pred1 = torch.mean(GENnet(zK_EBM.detach()), dim=1).squeeze()
+        X_pred2 = torch.mean(GENnet(zK_GEN.detach()), dim=1).squeeze()
 
-    # Reshape X_pred1 and X_pred2 to match the original data dimensions
-    X_pred1 = X_pred1.reshape(X.shape[0], -1)
-    X_pred2 = X_pred2.reshape(X.shape[0], -1)
-
-    # Generate the heatmap for the predicted distributions on the first subplot
-    df1 = pd.DataFrame({'x1': X_pred1[:, 0].detach().cpu().flatten(), 'x2': X_pred1[:, 1].detach().cpu().flatten()})
-    sns.kdeplot(data=df1, x='x1', y='x2', fill=True, cmap='Reds', levels=50, ax=axs[0])
-    axs[0].set_title(r'Generated Dist. -- z sampled from $p_\alpha(z)$')
+    sns.kdeplot(X.view(-1).cpu().numpy(), levels=50, ax=axs[0])
+    axs[0].set_title(r"$p(x)$ -- Real Distribution")
 
     # Generate the heatmap for the predicted distributions on the second subplot
-    df2 = pd.DataFrame({'x1': X_pred2[:, 0].detach().cpu().flatten(), 'x2': X_pred2[:, 1].detach().cpu().flatten()})
-    sns.kdeplot(data=df2, x='x1', y='x2', fill=True, cmap='Reds', levels=50, ax=axs[1])
-    axs[1].set_title(r'Generated Dist. -- z sampled from $p_\theta(z|x)$')
+    sns.kdeplot(X_pred1.view(-1).cpu().numpy(), fill=True, cmap='Reds', levels=50, ax=axs[1])
+    axs[1].set_title(r"$p_\alpha(x|z)$ -- z sampled from $p_\alpha(z)$")
+
+    # Generate the heatmap for the predicted distributions on the third subplot
+    sns.kdeplot(X_pred2.view(-1).cpu().numpy(), fill=True, cmap='Reds', levels=50, ax=axs[2])
+    axs[2].set_title(r"$p_\theta(x|z)$ -- z sampled from $p_\theta(z|x)$")
+
+    plt.title(r'Kernel Density Estimation of Data and Generated Distributions')
 
     # Save the figure as a PNG file
     fig.savefig('img/PDFplot.png')
