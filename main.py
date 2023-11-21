@@ -21,8 +21,8 @@ from src.utils.diagnostics import plot_hist, plot_pdf
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Hyperparameters
-NUM_EPOCHS = 10
-BATCH_SIZE = 256
+NUM_EPOCHS = 200
+BATCH_SIZE = 32
 
 Z_SAMPLES = 100 # Size of latent Z vector
 EMB_OUT_SIZE = 1 # Size of output of EBM
