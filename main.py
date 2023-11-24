@@ -15,14 +15,14 @@ from src.MCMC_Samplers.langevin import langevin_sampler
 from src.loss_functions.EBM_loss_fn import EBM_loss
 from src.loss_functions.GEN_loss_fn import generator_loss
 from src.pipeline.train import train_step
-from src.pipeline.sample import generate_sample, save_final_sample, generate_final_grid
+from src.pipeline.sample import generate_sample, save_one_sample, save_final_grid
 from src.utils.diagnostics import plot_hist, plot_pdf
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Hyperparameters
-NUM_EPOCHS = 10
+NUM_EPOCHS = 250
 BATCH_SIZE = 32
 
 Z_SAMPLES = 100 # Size of latent Z vector
@@ -40,7 +40,7 @@ G_STEP = 0.1
 E_SAMPLE_STEPS = 40
 G_SAMPLE_STEPS = 40
 
-p0_SIGMA = 0.2
+p0_SIGMA = 0.15
 GENERATOR_SIGMA = 0.1
 
 SAMPLE_BREAK = NUM_EPOCHS // 10
@@ -133,14 +133,15 @@ with torch.profiler.profile(
 
 writer.close()
 
-# # Plot the final generated image
-# save_final_sample(generated_data, hyperparams=[NUM_EPOCHS, p0_SIGMA, GENERATOR_SIGMA])
+# Plot the final generated image/grid
+save_one_sample(generated_data, hyperparams=[NUM_EPOCHS, p0_SIGMA, GENERATOR_SIGMA])
+save_final_grid(generated_data, hyperparams=[NUM_EPOCHS, p0_SIGMA, GENERATOR_SIGMA])
 
-# # Diagnostics
-# plot_hist(Sampler, EBMnet, GENnet, x)
-# Sampler.batch_size = 100
-# X = train_dataset.data[:100].to(device).unsqueeze(1).float()
-# plot_pdf(Sampler, EBMnet, GENnet, X.float())
+# Diagnostics
+plot_hist(Sampler, EBMnet, GENnet, x)
+Sampler.batch_size = 100
+X = train_dataset.data[:100].to(device).unsqueeze(1).float()
+plot_pdf(Sampler, EBMnet, GENnet, X.float())
 
-generate_final_grid(Sampler, GENnet, EBMnet, num_samples=16)
+
 
