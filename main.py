@@ -14,7 +14,8 @@ from src.models.GEN import topdownGenerator
 from src.MCMC_Samplers.langevin import langevin_sampler
 from src.loss_functions.EBM_loss_fn import EBM_loss
 from src.loss_functions.GEN_loss_fn import generator_loss
-from src.pipeline import train_step, generate_sample, save_final_sample
+from src.pipeline.train import train_step
+from src.pipeline.sample import generate_sample, save_final_sample
 from src.utils.diagnostics import plot_hist, plot_pdf
 
 
@@ -28,7 +29,7 @@ Z_SAMPLES = 100 # Size of latent Z vector
 EMB_OUT_SIZE = 3 # Size of output of EBM
 GEN_OUT_CHANNELS = 3 # Size of output of GEN
 GEN_FEATURE_DIM = 64 # Feature dimensions of generator
-EBM_FEATURE_DIM = 200 # Feature dimensions of EBM
+EBM_FEATURE_DIM = 250 # Feature dimensions of EBM
 
 E_LR = 0.0002
 G_LR = 0.001
@@ -36,10 +37,10 @@ G_LR = 0.001
 E_STEP = 0.2
 G_STEP = 0.1
 
-E_SAMPLE_STEPS = 30
-G_SAMPLE_STEPS = 30
+E_SAMPLE_STEPS = 40
+G_SAMPLE_STEPS = 40
 
-p0_SIGMA = 0.3
+p0_SIGMA = 0.2
 GENERATOR_SIGMA = 0.1
 
 SAMPLE_BREAK = NUM_EPOCHS // 10
