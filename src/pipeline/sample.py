@@ -25,11 +25,11 @@ def save_one_sample(final_data, hyperparams):
 
     plt.savefig('img/Final Vanilla Pang Sample.png')
 
-def save_final_grid(final_data, hyperparams):
+def save_final_grid(final_data, hyperparams, num_images=-1):
     """
     Function to save the final grid of samples from training.
     """
-    img_grid = torchvision.utils.make_grid(final_data, normalize=True)
+    img_grid = torchvision.utils.make_grid(final_data[:num_images], normalize=True)
     plt.imshow(img_grid.permute(1, 2, 0).cpu().detach().numpy(), cmap='gray')
     plt.axis('off')
 

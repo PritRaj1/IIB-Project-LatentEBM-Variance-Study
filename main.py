@@ -135,7 +135,7 @@ writer.close()
 
 # Plot the final generated image/grid
 save_one_sample(generated_data, hyperparams=[NUM_EPOCHS, p0_SIGMA, GENERATOR_SIGMA])
-save_final_grid(generated_data, hyperparams=[NUM_EPOCHS, p0_SIGMA, GENERATOR_SIGMA])
+save_final_grid(generated_data, hyperparams=[NUM_EPOCHS, p0_SIGMA, GENERATOR_SIGMA], num_images=BATCH_SIZE)
 
 # Diagnostics
 plot_hist(Sampler, EBMnet, GENnet, x)
