@@ -5,7 +5,7 @@ def train_generator(x, zK_GEN, GENnet, GENoptimiser, lossG):
     Function to train the generator.
     """
     GENoptimiser.zero_grad()
-    x_pred = GENnet(zK_GEN.detach()) + (GENnet.lkhood_sigma * torch.randn_like(x))
+    x_pred = GENnet(zK_GEN) + (GENnet.lkhood_sigma * torch.randn_like(x))
     loss_gen = lossG(x, x_pred, GENnet.lkhood_sigma) 
     loss_gen.backward()
     GENoptimiser.step()
@@ -30,8 +30,8 @@ def train_step(x, GENnet, EBMnet, GENoptimiser, EBMoptimiser, Sampler, lossG, lo
     """ 
     # 1a. Sample from latent prior p0(z)
     z0 = Sampler.sample_p0()
-    zK_EBM = Sampler.get_sample(z0, None, EBMnet, None)
-    zK_GEN = Sampler.get_sample(z0, x, GENnet, EBMnet)
+    zK_EBM = Sampler.get_sample(z0, None, EBMnet, None).detach()
+    zK_GEN = Sampler.get_sample(z0, x, GENnet, EBMnet).detach()
     
     ###
     # 2. Train generator
