@@ -1,7 +1,6 @@
 import torch
 import torchvision
 from torch.utils.data import DataLoader
-from sklearn.datasets import make_moons, make_blobs
 from torchvision.datasets import MNIST
 from torchvision.transforms import ToTensor
 from tqdm import tqdm
