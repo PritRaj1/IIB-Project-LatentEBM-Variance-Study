@@ -3,7 +3,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
 
-def plot_hist(Sampler, EBMnet, GENnet, x):
+def plot_hist(Sampler, EBMnet, GENnet, x, file='Vanilla Pang'):
     """
     Function to plot the histograms of the prior and posterior distributions
 
@@ -39,9 +39,9 @@ def plot_hist(Sampler, EBMnet, GENnet, x):
     # Add legends and save the figure
     plt.legend()
     plt.legend()
-    plt.savefig('img/Histplot.png')
+    plt.savefig(f'img/{file}/Histplot.png')
 
-def plot_pdf(Sampler, EBMnet, GENnet, X):
+def plot_pdf(Sampler, EBMnet, GENnet, X, file='Vanilla Pang'):
     """
     Function to plot the PDFs of the pixel instensities of the real and generated images
 
@@ -82,4 +82,5 @@ def plot_pdf(Sampler, EBMnet, GENnet, X):
     plt.title(r'Kernel Density Estimation of Data and Generated Pixel Intensities')
 
     # Save the figure as a PNG file
-    fig.savefig('img/PDFplot.png')
+    fig.savefig(f'img/{file}/PDFplot.png')
+
