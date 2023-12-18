@@ -19,12 +19,13 @@ class topdownGenerator(nn.Module):
     - forward(z): generates a sample from the generator
     - grad_log_fn(z, x, EBM_model): computes the gradient of the log posterior: log[p(x | z) * p(z)] w.r.t. z
     """
-    def __init__(self, input_dim, feature_dim, output_dim, sampler, lkhood_sigma, langevin_steps=20, langevin_s=0.1):
+    def __init__(self, input_dim, feature_dim, output_dim, sampler, lkhood_sigma, langevin_steps=20, langevin_s=0.1, device='cuda'):
         super().__init__()
 
         self.s = langevin_s
         self.K = langevin_steps
         self.lkhood_sigma = lkhood_sigma
+        self.device = device
 
         # Langevin sampler
         self.sampler = sampler
@@ -54,6 +55,8 @@ class topdownGenerator(nn.Module):
         return log_lkhood.mean()
     
     def train(self, x, EBM):
+        x = x.to(self.device)
+        
         # 1. Sample from exp-tilted prior and posterior
         zK_EBM, zK_GEN = sample_zK(x, self, EBM)
 

@@ -5,6 +5,7 @@ from torchvision.datasets import MNIST
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 from torchvision import transforms
+from torch.nn import DataParallel
 
 import sys; sys.path.append('..')
 from src.networks.EBM import tiltedpriorEBM
@@ -81,6 +82,7 @@ EBMnet = tiltedpriorEBM(
 #     lkhood_sigma=GENERATOR_SIGMA, 
 #     langevin_steps=G_SAMPLE_STEPS, 
 #     langevin_s=G_STEP
+#     device = device
 # ).to(device)
 
 GENnet = temperedGenerator(
@@ -92,7 +94,8 @@ GENnet = temperedGenerator(
     langevin_steps=G_SAMPLE_STEPS,
     langevin_s=G_STEP,
     num_replicas=NUM_TEMPS,
-    temp_schedule_power=1
+    temp_schedule_power=1,
+    device=device
 ).to(device)
 
 # File for saving images
@@ -112,9 +115,8 @@ for epoch in tqdm_bar:
     GENtotal_loss = 0
 
     for batch_idx, (batch, _) in enumerate(loader): 
-        x = batch.to(device)
 
-        lossG, lossE = GENnet.train(x, EBMnet)
+        lossG, lossE = GENnet.train(batch, EBMnet)
         
         EBMtotal_loss += lossE
         GENtotal_loss += lossG

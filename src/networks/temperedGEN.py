@@ -24,13 +24,14 @@ class temperedGenerator(nn.Module):
     - grad_log_fn(z, x, EBM_model): computes the gradient of the log posterior: log[p(x | z)^t * p(z)] w.r.t. z
     - temperature_schedule(schedule_name, num_temps): sets the temperature schedule
     """
-    def __init__(self, input_dim, feature_dim, output_dim, sampler, lkhood_sigma, langevin_steps=20, langevin_s=0.1, num_replicas=10, temp_schedule_power=1):
+    def __init__(self, input_dim, feature_dim, output_dim, sampler, lkhood_sigma, langevin_steps=20, langevin_s=0.1, num_replicas=10, temp_schedule_power=1, device='cuda'):
         super().__init__()
         
         self.s = langevin_s # This is s in langevin sampler
         self.K = langevin_steps # Number of steps the langevin sampler takes
         self.lkhood_sigma = lkhood_sigma
         self.num_replicas = num_replicas
+        self.device = device
 
         # Init temperature schedule: t_i = (i / (num_replicas - 1))^p
         self.temp_schedule = np.linspace(0, 1, num_replicas)**temp_schedule_power
@@ -67,6 +68,7 @@ class temperedGenerator(nn.Module):
         return log_lkhood.mean()
     
     def train(self, x, EBM):
+        x = x.to(self.device)
 
         # Initialise losses 
         loss_GEN = 0
