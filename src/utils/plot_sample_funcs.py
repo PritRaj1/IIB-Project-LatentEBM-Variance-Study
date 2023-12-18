@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 def generate_sample(GENnet, EBMnet):
     z = GENnet.sampler.sample_p0()
+    z.view(z.size(0), -1, 1, 1)
     z_prior = GENnet.sampler.get_sample(z, None, EBMnet, None)
     with torch.no_grad():
         x_pred = GENnet(z_prior) 

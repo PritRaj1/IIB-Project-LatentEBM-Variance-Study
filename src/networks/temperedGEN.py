@@ -83,10 +83,10 @@ class temperedGenerator(nn.Module):
             # 1. Sample from exp-tilted prior and posterior
             zK_EBM, zK_GEN = sample_zK(x, self, EBM)
 
-            # 2. Train generator
+            # 2. Get prediction loss for this temperature
             CurrentLoss_GEN = self.loss_fn(x, zK_GEN)
             
-            # 3. Train EBM
+            # 3. Get prior loss for this temperature
             CurrnetLoss_EBM = EBM.loss_fn(zK_EBM, zK_GEN)
 
             # See "discretised thermodynamic integration" using trapezoid rule

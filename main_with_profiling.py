@@ -80,7 +80,8 @@ GENnet = topdownGenerator(
     sampler=Sampler,
     lkhood_sigma=GENERATOR_SIGMA, 
     langevin_steps=G_SAMPLE_STEPS, 
-    langevin_s=G_STEP
+    langevin_s=G_STEP,
+    device = device
 ).to(device)
 
 # GENnet = temperedGenerator(
@@ -119,9 +120,8 @@ with torch.profiler.profile(
         GENtotal_loss = 0
 
         for batch_idx, (batch, _) in enumerate(loader): 
-            x = batch.to(device)
 
-            lossG, lossE = GENnet.train(x, EBMnet)
+            lossG, lossE = GENnet.train(batch, EBMnet)
             EBMtotal_loss += lossE
             GENtotal_loss += lossG
 

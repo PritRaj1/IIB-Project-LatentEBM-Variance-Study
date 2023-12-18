@@ -20,11 +20,11 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Hyperparameters
 NUM_EPOCHS = 100
-BATCH_SIZE = 32
+NUM_BATCHES = 200
 
 Z_SAMPLES = 100 # Size of latent Z vector
 EMB_OUT_SIZE = 3 # Size of output of EBM
-GEN_OUT_CHANNELS = 3 # Size of output of GEN
+GEN_OUT_CHANNELS = 1 # Size of output of GEN
 GEN_FEATURE_DIM = 64 # Feature dimensions of generator
 EBM_FEATURE_DIM = 250 # Feature dimensions of EBM
 
@@ -34,8 +34,8 @@ G_LR = 0.001
 E_STEP = 0.2
 G_STEP = 0.1
 
-E_SAMPLE_STEPS = 40
-G_SAMPLE_STEPS = 40
+E_SAMPLE_STEPS = 20
+G_SAMPLE_STEPS = 20
 
 p0_SIGMA = 0.15
 GENERATOR_SIGMA = 0.1
@@ -56,6 +56,7 @@ transform = transforms.Compose([
 
 # Load the MNIST dataset
 train_dataset = MNIST(root="dataset/", transform=transform, download=True)
+BATCH_SIZE = len(train_dataset) // NUM_BATCHES
 loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 
 Sampler = langevin_sampler(
@@ -74,29 +75,29 @@ EBMnet = tiltedpriorEBM(
     langevin_s=E_STEP
 ).to(device)
 
-# GENnet = topdownGenerator(
-#     input_dim=Z_SAMPLES,
-#     feature_dim=GEN_FEATURE_DIM, 
-#     output_dim=GEN_OUT_CHANNELS, 
-#     sampler=Sampler,
-#     lkhood_sigma=GENERATOR_SIGMA, 
-#     langevin_steps=G_SAMPLE_STEPS, 
-#     langevin_s=G_STEP
-#     device = device
-# ).to(device)
-
-GENnet = temperedGenerator(
+GENnet = topdownGenerator(
     input_dim=Z_SAMPLES,
     feature_dim=GEN_FEATURE_DIM, 
     output_dim=GEN_OUT_CHANNELS, 
     sampler=Sampler,
-    lkhood_sigma=GENERATOR_SIGMA,
-    langevin_steps=G_SAMPLE_STEPS,
+    lkhood_sigma=GENERATOR_SIGMA, 
+    langevin_steps=G_SAMPLE_STEPS, 
     langevin_s=G_STEP,
-    num_replicas=NUM_TEMPS,
-    temp_schedule_power=1,
-    device=device
+    device = device
 ).to(device)
+
+# GENnet = temperedGenerator(
+#     input_dim=Z_SAMPLES,
+#     feature_dim=GEN_FEATURE_DIM, 
+#     output_dim=GEN_OUT_CHANNELS, 
+#     sampler=Sampler,
+#     lkhood_sigma=GENERATOR_SIGMA,
+#     langevin_steps=G_SAMPLE_STEPS,
+#     langevin_s=G_STEP,
+#     num_replicas=NUM_TEMPS,
+#     temp_schedule_power=1,
+#     device=device
+# ).to(device)
 
 # File for saving images
 print(f"Using {GENnet.__class__.__name__} model.")
@@ -115,9 +116,7 @@ for epoch in tqdm_bar:
     GENtotal_loss = 0
 
     for batch_idx, (batch, _) in enumerate(loader): 
-
         lossG, lossE = GENnet.train(batch, EBMnet)
-        
         EBMtotal_loss += lossE
         GENtotal_loss += lossG
     
@@ -136,7 +135,7 @@ save_one_sample(generated_data, hyperparams=[NUM_EPOCHS, p0_SIGMA, GENERATOR_SIG
 save_final_grid(generated_data, hyperparams=[NUM_EPOCHS, p0_SIGMA, GENERATOR_SIGMA], file=FILE)
 
 # Diagnostics
-plot_hist(Sampler, EBMnet, GENnet, x, file=FILE)
+plot_hist(Sampler, EBMnet, GENnet, batch, file=FILE)
 Sampler.batch_size = 100
 X = train_dataset.data[:100].to(device).unsqueeze(1).float()
 plot_pdf(Sampler, EBMnet, GENnet, X.float(), file=FILE)
