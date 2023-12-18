@@ -2,9 +2,9 @@ import torch
 import torchvision
 import matplotlib.pyplot as plt
 
-def generate_sample(Sampler, GENnet, EBMnet):
-    z = Sampler.sample_p0()
-    z_prior = Sampler.get_sample(z, None, EBMnet, None)
+def generate_sample(GENnet, EBMnet):
+    z = GENnet.sampler.sample_p0()
+    z_prior = GENnet.sampler.get_sample(z, None, EBMnet, None)
     with torch.no_grad():
         x_pred = GENnet(z_prior) 
     

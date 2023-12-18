@@ -106,24 +106,35 @@ GENnet.optimiser = GENoptimiser
 tqdm_bar = tqdm(range(NUM_EPOCHS))
 writer = SummaryWriter(f"runs/{FILE}")
 
-for epoch in tqdm_bar:
-    EBMtotal_loss = 0
-    GENtotal_loss = 0
+with torch.profiler.profile(
+        schedule=torch.profiler.schedule(wait=1, warmup=1, active=3, repeat=1),
+        on_trace_ready=torch.profiler.tensorboard_trace_handler(f'./runs/{FILE}/profilerlogs'),
+        record_shapes=True,
+        profile_memory=True,
+        with_stack=True
+) as prof:
+    for epoch in tqdm_bar:
+        EBMtotal_loss = 0
+        GENtotal_loss = 0
 
-    for batch_idx, (batch, _) in enumerate(loader): 
-        x = batch.to(device)
+        for batch_idx, (batch, _) in enumerate(loader): 
+            x = batch.to(device)
 
-        lossG, lossE = GENnet.train(x, EBMnet)
-        EBMtotal_loss += lossE
-        GENtotal_loss += lossG
-    
-    tqdm_bar.set_description(f"Epoch {epoch}: EBM-Loss: {EBMtotal_loss / (BATCH_SIZE):.4f} GEN-Loss: {GENtotal_loss / (BATCH_SIZE):.4f}")
+            lossG, lossE = GENnet.train(x, EBMnet)
+            EBMtotal_loss += lossE
+            GENtotal_loss += lossG
 
-    if (epoch % SAMPLE_BREAK == 0 or epoch == NUM_EPOCHS):
-        generated_data = generate_sample(GENnet, EBMnet).reshape(-1, 1, 28, 28)
-        img_grid = torchvision.utils.make_grid(generated_data, normalize=True)
+            prof.step()
+            if batch_idx >= 5:
+                break
+        
+        tqdm_bar.set_description(f"Epoch {epoch}: EBM-Loss: {EBMtotal_loss / (BATCH_SIZE):.4f} GEN-Loss: {GENtotal_loss / (BATCH_SIZE):.4f}")
 
-        writer.add_image(f"Generated Samples -- {FILE} Model", img_grid, global_step=epoch)
+        if (epoch % SAMPLE_BREAK == 0 or epoch == NUM_EPOCHS):
+            generated_data = generate_sample(GENnet, EBMnet).reshape(-1, 1, 28, 28)
+            img_grid = torchvision.utils.make_grid(generated_data, normalize=True)
+
+            writer.add_image(f"Generated Samples -- {FILE} Model", img_grid, global_step=epoch)
 
 writer.close()
 
@@ -136,3 +147,5 @@ plot_hist(Sampler, EBMnet, GENnet, x, file=FILE)
 Sampler.batch_size = 100
 X = train_dataset.data[:100].to(device).unsqueeze(1).float()
 plot_pdf(Sampler, EBMnet, GENnet, X.float(), file=FILE)
+
+

@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from src.utils.grad_log_functions import EBM_grad_log_fn
+
 class tiltedpriorEBM(nn.Module):
     """
     Tilted prior energy-based model.
@@ -38,8 +40,10 @@ class tiltedpriorEBM(nn.Module):
     
     def grad_log_fn(self, z, x, model):
         
-        # Compute gradient of log p_a(x) w.r.t. z
-        f_z = self.forward(z)
-        grad_f_z = torch.autograd.grad(f_z.sum(), z, create_graph=True)[0] # Gradient of f_a(z)
-        
-        return grad_f_z - (z / (self.p0_sigma * self.p0_sigma)) # This is GRAD log[p_a(x)]
+        return EBM_grad_log_fn(self, z)
+    
+    def loss_fn(self, z_prior, z_posterior):
+        en_pos = self(z_posterior.detach())
+        en_neg = self(z_prior.detach())
+                
+        return (en_pos - en_neg).mean()

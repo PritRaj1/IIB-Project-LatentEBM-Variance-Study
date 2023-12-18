@@ -1,6 +1,9 @@
 import torch
 import torch.nn as nn
 
+from src.utils.grad_log_functions import vanillaGEN_grad_log_fn
+from src.utils.helper_functions import sample_zK, update_parameters
+
 class topdownGenerator(nn.Module):
     """
     Top-down generator.
@@ -16,12 +19,15 @@ class topdownGenerator(nn.Module):
     - forward(z): generates a sample from the generator
     - grad_log_fn(z, x, EBM_model): computes the gradient of the log posterior: log[p(x | z) * p(z)] w.r.t. z
     """
-    def __init__(self, input_dim, feature_dim, output_dim, lkhood_sigma, langevin_steps=20, langevin_s=0.1):
+    def __init__(self, input_dim, feature_dim, output_dim, sampler, lkhood_sigma, langevin_steps=20, langevin_s=0.1):
         super().__init__()
 
         self.s = langevin_s
         self.K = langevin_steps
         self.lkhood_sigma = lkhood_sigma
+
+        # Langevin sampler
+        self.sampler = sampler
 
         self.layers = nn.Sequential(
             nn.ConvTranspose2d(input_dim, feature_dim*8, kernel_size=7, stride=1, padding=0),
@@ -38,15 +44,24 @@ class topdownGenerator(nn.Module):
         return self.layers(z)
     
     def grad_log_fn(self, z, x, EBM_model):
+        return vanillaGEN_grad_log_fn(self, z, x, EBM_model)
 
-        # Compute gradient of log[p(x | z)] w.r.t z
-        g_z = self.forward(z.view(z.size(0), -1, 1, 1))
-        log_gz = -(torch.norm(x-g_z, dim=-1)**2) / (2.0 * self.lkhood_sigma * self.lkhood_sigma)
-        grad_log_gz = torch.autograd.grad(log_gz.sum(), z, create_graph=True)[0]
+    def loss_fn(self, x, z):
+        # Compute -log[p(x | z)]; maximize this
+        x_pred = self.forward(z) + (self.lkhood_sigma * torch.randn_like(x))
+        log_lkhood = (torch.norm(x-x_pred, dim=-1)**2) / (2.0 * self.lkhood_sigma * self.lkhood_sigma)
+        
+        return log_lkhood.mean()
+    
+    def train(self, x, EBM):
+        # 1. Sample from exp-tilted prior and posterior
+        zK_EBM, zK_GEN = sample_zK(x, self, EBM)
 
-        # Compute gradient of log[p(z)] w.r.t z
-        f_z = EBM_model.forward(z)
-        grad_f_z = torch.autograd.grad(f_z.sum(), z, create_graph=True)[0] # Gradient of f_a(z)
-        grad_log_prior = grad_f_z - (z / (EBM_model.p0_sigma * EBM_model.p0_sigma))
+        # 2. Train generator
+        loss_GEN = self.loss_fn(x, zK_GEN)
+        
+        # 3. Train EBM
+        loss_EBM = EBM.loss_fn(zK_EBM, zK_GEN)
 
-        return grad_log_gz + grad_log_prior # This is GRAD log[ p(x | z) * p(z) ]
+        # 4. Update steps + return loss.item()
+        return update_parameters(loss_GEN, self.optimiser), update_parameters(loss_EBM, EBM.optimiser)
