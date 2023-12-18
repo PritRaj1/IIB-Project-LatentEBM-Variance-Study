@@ -20,7 +20,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Hyperparameters
 NUM_EPOCHS = 100
-NUM_BATCHES = 200
+NUM_BATCHES = 625
 
 Z_SAMPLES = 100 # Size of latent Z vector
 EMB_OUT_SIZE = 3 # Size of output of EBM
@@ -132,10 +132,10 @@ writer.close()
 
 # Plot the final generated image/grid
 save_one_sample(generated_data, hyperparams=[NUM_EPOCHS, p0_SIGMA, GENERATOR_SIGMA], file=FILE)
-save_final_grid(generated_data, hyperparams=[NUM_EPOCHS, p0_SIGMA, GENERATOR_SIGMA], file=FILE)
+save_final_grid(generated_data, hyperparams=[NUM_EPOCHS, p0_SIGMA, GENERATOR_SIGMA], file=FILE, num_images=32)
 
 # Diagnostics
-plot_hist(Sampler, EBMnet, GENnet, batch, file=FILE)
+plot_hist(Sampler, EBMnet, GENnet, batch.to(device), file=FILE)
 Sampler.batch_size = 100
 X = train_dataset.data[:100].to(device).unsqueeze(1).float()
 plot_pdf(Sampler, EBMnet, GENnet, X.float(), file=FILE)
