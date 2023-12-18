@@ -47,9 +47,6 @@ SAMPLE_BREAK = NUM_EPOCHS // 10
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using {device} for computation.")
 
-#FILE = 'Vanilla Pang'
-FILE = 'Power Posteriors Alt'
-
 # Transforms to apply to dataset. Normalising improves data convergence, numerical stability, and regularisation.
 transform = transforms.Compose([
     transforms.ToTensor(),
@@ -76,27 +73,31 @@ EBMnet = tiltedpriorEBM(
     langevin_s=E_STEP
 ).to(device)
 
-# GENnet = topdownGenerator(
-#     input_dim=Z_SAMPLES,
-#     feature_dim=GEN_FEATURE_DIM, 
-#     output_dim=GEN_OUT_CHANNELS, 
-#     sampler=Sampler,
-#     lkhood_sigma=GENERATOR_SIGMA, 
-#     langevin_steps=G_SAMPLE_STEPS, 
-#     langevin_s=G_STEP
-# ).to(device)
-
-GENnet = temperedGenerator(
+GENnet = topdownGenerator(
     input_dim=Z_SAMPLES,
     feature_dim=GEN_FEATURE_DIM, 
     output_dim=GEN_OUT_CHANNELS, 
     sampler=Sampler,
-    lkhood_sigma=GENERATOR_SIGMA,
-    langevin_steps=G_SAMPLE_STEPS,
-    langevin_s=G_STEP,
-    num_replicas=NUM_TEMPS,
-    temp_schedule_power=1
+    lkhood_sigma=GENERATOR_SIGMA, 
+    langevin_steps=G_SAMPLE_STEPS, 
+    langevin_s=G_STEP
 ).to(device)
+
+# GENnet = temperedGenerator(
+#     input_dim=Z_SAMPLES,
+#     feature_dim=GEN_FEATURE_DIM, 
+#     output_dim=GEN_OUT_CHANNELS, 
+#     sampler=Sampler,
+#     lkhood_sigma=GENERATOR_SIGMA,
+#     langevin_steps=G_SAMPLE_STEPS,
+#     langevin_s=G_STEP,
+#     num_replicas=NUM_TEMPS,
+#     temp_schedule_power=1
+# ).to(device)
+
+# File for saving images
+print(f"Using {GENnet.__class__.__name__} model.")
+FILE = 'Power Posteriors Alt' if GENnet.__class__.__name__ == 'temperedGenerator' else 'Vanilla Pang'
 
 EBMoptimiser = torch.optim.Adam(EBMnet.parameters(), lr=E_LR)
 EBMnet.optimiser = EBMoptimiser

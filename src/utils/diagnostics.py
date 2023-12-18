@@ -31,8 +31,8 @@ def plot_hist(Sampler, EBMnet, GENnet, x, file='Vanilla Pang'):
 
     # Plot the histograms on the first subplot
     sns.axes_style("darkgrid")
-    sns.histplot(zK_EBM_mean.detach().cpu().numpy(), color='red', kde=True, label=r'$p_\alpha(z)$ from EBM')
-    sns.histplot(zK_GEN_mean.detach().cpu().numpy(), color='blue', kde=True, label=r'$p_\theta(z|x)$ from GEN')
+    sns.histplot(zK_EBM_mean.detach().cpu().numpy(), bins=20, color='red', kde=True, label=r'$p_\alpha(z)$ from EBM')
+    sns.histplot(zK_GEN_mean.detach().cpu().numpy(), bins=20, color='blue', kde=True, label=r'$p_\theta(z|x)$ from GEN')
 
     plt.title(r'Histogram of prior-posterior matching')
 

@@ -98,9 +98,3 @@ class temperedGenerator(nn.Module):
     
         # 4. Update steps + return loss.item()
         return update_parameters(loss_GEN, self.optimiser), update_parameters(loss_EBM, EBM.optimiser)
-    
-
-
-
-
-

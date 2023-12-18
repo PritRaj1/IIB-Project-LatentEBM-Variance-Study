@@ -47,9 +47,6 @@ SAMPLE_BREAK = NUM_EPOCHS // 10
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using {device} for computation.")
 
-#FILE = 'Vanilla Pang'
-FILE = 'Power Posteriors Alt'
-
 # Transforms to apply to dataset. Normalising improves data convergence, numerical stability, and regularisation.
 transform = transforms.Compose([
     transforms.ToTensor(),
@@ -98,6 +95,10 @@ GENnet = temperedGenerator(
     temp_schedule_power=1
 ).to(device)
 
+# File for saving images
+print(f"Using {GENnet.__class__.__name__} model.")
+FILE = 'Power Posteriors Alt' if GENnet.__class__.__name__ == 'temperedGenerator' else 'Vanilla Pang'
+
 EBMoptimiser = torch.optim.Adam(EBMnet.parameters(), lr=E_LR)
 EBMnet.optimiser = EBMoptimiser
 GENoptimiser = torch.optim.Adam(GENnet.parameters(), lr=G_LR)
@@ -114,6 +115,7 @@ for epoch in tqdm_bar:
         x = batch.to(device)
 
         lossG, lossE = GENnet.train(x, EBMnet)
+        
         EBMtotal_loss += lossE
         GENtotal_loss += lossG
     
