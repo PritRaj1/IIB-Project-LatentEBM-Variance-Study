@@ -55,10 +55,24 @@ class topdownGenerator(nn.Module):
         return log_lkhood.mean()
     
     def train(self, x, EBM):
+        """
+        Train the generator.
+
+        Args:
+        - x (torch.Tensor): the batch of images
+        - EBM (torch.nn.Module): the energy-based model
+
+        Returns:
+        - loss_GEN (torch.Tensor): the loss of the generator
+        - loss_EBM (torch.Tensor): the loss of the energy-based model
+        - variances (list): the mean of the variances of the samples in the batch
+        - variances (list): the variance of the variances of the samples in the batch
+        """
+        # Move data to device
         x = x.to(self.device)
         
         # 1. Sample from exp-tilted prior and posterior
-        zK_EBM, zK_GEN = sample_zK(x, self, EBM)
+        zK_EBM, zK_GEN = sample_zK(x, self, EBM) # Shapes are (batch_size, NUM_Z, 1, 1)
 
         # 2. Train generator
         loss_GEN = self.loss_fn(x, zK_GEN)
@@ -66,5 +80,8 @@ class topdownGenerator(nn.Module):
         # 3. Train EBM
         loss_EBM = EBM.loss_fn(zK_EBM, zK_GEN)
 
-        # 4. Update steps + return loss.item()
-        return update_parameters(loss_GEN, self.optimiser), update_parameters(loss_EBM, EBM.optimiser)
+        # 4. Compute variances of zK_GEN across all samples (NUM_Z dimension)
+        variances = torch.var(zK_GEN, dim=(1, 2, 3))
+
+        # 5. Update parameters
+        return update_parameters(loss_GEN, self.optimiser), update_parameters(loss_EBM, EBM.optimiser), [torch.mean(variances)], [torch.var(variances)]

@@ -34,8 +34,8 @@ class temperedGenerator(nn.Module):
         self.device = device
 
         # Init temperature schedule: t_i = (i / (num_replicas - 1))^p
-        self.temp_schedule = np.linspace(0, 1, num_replicas)**temp_schedule_power
-        self.temp = self.temp_schedule[0]
+        self.temp_schedule = torch.tensor(np.linspace(0, 1, num_replicas)**temp_schedule_power, device=device)
+        self.current_temp = self.temp_schedule[0]
 
         # Langevin sampler
         self.sampler = sampler
@@ -68,20 +68,39 @@ class temperedGenerator(nn.Module):
         return log_lkhood.mean()
     
     def train(self, x, EBM):
+        """
+        Train the generator.
+
+        Args:
+        - x (torch.Tensor): the batch of images
+        - EBM (torch.nn.Module): the energy-based model
+
+        Returns:
+        - loss_GEN (float): the loss of the generator
+        - loss_EBM (float): the loss of the energy-based model
+        - expected_var (torch.Tensor): the expected variance of zK_GEN for each temperature
+        - var_var (torch.Tensor): the variance of the variances of zK_GEN for each temperature
+        """
+        # Move data to device
         x = x.to(self.device)
 
-        # Initialise losses 
+        # Initialize losses 
         loss_GEN = 0
         loss_EBM = 0
-        lossG_prev = 0
-        lossE_prev = 0
 
-        for idx, temp in enumerate(self.temp_schedule):
+        # Get the temperature schedule as a PyTorch tensor
+        temp_schedule = self.temp_schedule.clone().detach().to(self.device)
+
+        # Initialise arrays to store expected variance and variance of variances in zK_GEN for each temperature
+        expected_var = torch.zeros(len(temp_schedule), device=self.device)
+        var_var = torch.zeros(len(temp_schedule), device=self.device)
+
+        for idx, temp in enumerate(temp_schedule):
             # Set replica temperature
             self.current_temp = temp
 
             # 1. Sample from exp-tilted prior and posterior
-            zK_EBM, zK_GEN = sample_zK(x, self, EBM)
+            zK_EBM, zK_GEN = sample_zK(x, self, EBM) # Shapes are (batch_size, NUM_Z, 1, 1)
 
             # 2. Get prediction loss for this temperature
             CurrentLoss_GEN = self.loss_fn(x, zK_GEN)
@@ -90,13 +109,14 @@ class temperedGenerator(nn.Module):
             CurrnetLoss_EBM = EBM.loss_fn(zK_EBM, zK_GEN)
 
             # See "discretised thermodynamic integration" using trapezoid rule
-            delta_T = temp - self.temp_schedule[idx-1] if idx != 0 else 0 # delta_T = t_i - t_{i-1}
-            loss_GEN += 0.5 * (CurrentLoss_GEN + lossG_prev) * (delta_T) # 1/2 * (f(x) + f(x_prev)) * (delta_T)
-            loss_EBM += 0.5 * (CurrnetLoss_EBM + lossE_prev) * (delta_T) # 1/2 * (f(x) + f(x_prev)) * (delta_T)
+            delta_T = temp - temp_schedule[idx-1] if idx != 0 else 0 # delta_T = t_i - t_{i-1}
+            loss_GEN += (0.5 * (CurrentLoss_GEN + loss_GEN) * delta_T) # 1/2 * (f(x) + f(x_prev)) * (delta_T)
+            loss_EBM += (0.5 * (CurrnetLoss_EBM + loss_EBM) * delta_T) # 1/2 * (f(x) + f(x_prev)) * (delta_T)
 
-            # Update previous losses
-            lossG_prev = CurrentLoss_GEN
-            lossE_prev = CurrnetLoss_EBM
-    
-        # 4. Update steps + return loss.item()
-        return update_parameters(loss_GEN, self.optimiser), update_parameters(loss_EBM, EBM.optimiser)
+            # 4. Compute variances of zK_GEN across all samples (NUM_Z dimension), for each temperature
+            variances = torch.var(zK_GEN, dim=(1, 2, 3))
+            expected_var[idx] = torch.mean(variances)
+            var_var[idx] = torch.var(variances)
+            
+        # 5. Update parameters
+        return update_parameters(loss_GEN, self.optimiser), update_parameters(loss_EBM, EBM.optimiser), expected_var, var_var
