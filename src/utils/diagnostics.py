@@ -40,8 +40,8 @@ def plot_hist(Sampler, EBMnet, GENnet, x, file='Vanilla Pang'):
     plt.figure(figsize=(12, 6))
 
     # Plot the histograms on the first subplot
-    sns.histplot(zK_EBM_mean.detach().cpu().numpy(), bins=30, color='red', kde=False, label=r'$p_\alpha(z)$ from EBM')
-    sns.histplot(zK_GEN_mean.detach().cpu().numpy(), bins=30, color='blue', kde=False, label=r'$p_\theta(z|x)$ from GEN')
+    sns.histplot(zK_EBM_mean.detach().cpu().numpy(), bins=20, color='red', kde=False, label=r'$p_\alpha(z)$ from EBM')
+    sns.histplot(zK_GEN_mean.detach().cpu().numpy(), bins=20, color='blue', kde=False, label=r'$p_\theta(z|x)$ from GEN')
 
     plt.title(r'Histogram of Prior-posterior Matching')
 
@@ -95,7 +95,7 @@ def plot_pdf(Sampler, EBMnet, GENnet, X, file='Vanilla Pang'):
 
 def plot_temps(Sampler, EBMnet, GENnet, x, epoch, num_plots=5):
     FILE = 'Power Posteriors Alt'
-    
+
     # Create subplots
     fig, axs = plt.subplots(1, num_plots, figsize=(18, 6))
     fig.suptitle(f"Posterior Density Plots for Different Temperatures -- Epoch {epoch}")
@@ -109,6 +109,8 @@ def plot_temps(Sampler, EBMnet, GENnet, x, epoch, num_plots=5):
 
     # Sample from the posterior distribution and plot the results
     zK_EBM = Sampler.get_sample(z0, None, EBMnet, None)
+    zK_EBM_mean = torch.mean(zK_EBM, dim=1).squeeze()
+    zK_EBM_mean = (zK_EBM_mean - zK_EBM_mean.mean()) / zK_EBM_mean.std()
 
     for i, temp in enumerate(temps):
         # Set replica temperature
@@ -118,13 +120,13 @@ def plot_temps(Sampler, EBMnet, GENnet, x, epoch, num_plots=5):
         zK_GEN = Sampler.get_sample(zK_EBM, x, GENnet, EBMnet)
 
         # Mean along the dimension 1
-        zK_EBM_mean = torch.mean(zK_EBM, dim=1).squeeze()
         zK_GEN_mean = torch.mean(zK_GEN, dim=1).squeeze()
+        zK_GEN_mean = (zK_GEN_mean - zK_GEN_mean.mean()) / zK_GEN_mean.std()
 
         # Plot the histograms on the first subplot
         sns.axes_style("darkgrid")
-        sns.histplot(zK_EBM_mean.detach().cpu().numpy(), bins=30, color='red', kde=False, label=r'$p_\alpha(z)$ from EBM', ax=axs[i])
-        sns.histplot(zK_GEN_mean.detach().cpu().numpy(), bins=30, color='blue', kde=False, label=r'$p_\theta(z|x)$ from GEN', ax=axs[i])
+        sns.histplot(zK_EBM_mean.detach().cpu().numpy(), bins=20, color='red', kde=False, label=r'$p_\alpha(z)$ from EBM', ax=axs[i])
+        sns.histplot(zK_GEN_mean.detach().cpu().numpy(), bins=20, color='blue', kde=False, label=r'$p_\theta(z|x)$ from GEN', ax=axs[i])
 
         axs[i].set_title(f"Temperature: {temp:.3f}")
 

@@ -34,17 +34,18 @@ def save_one_sample(final_data, hyperparams, file='Vanilla Pang'):
 
     plt.savefig(f'img/{file}/Final Sample.png')
 
-def save_final_grid(final_data, hyperparams, file='Vanilla Pang', num_images=-1):
+def save_grid(data, hyperparams, epoch, file='Vanilla Pang', num_images=-1):
     """
     Function to save the final grid of samples from training.
     """
-    img_grid = torchvision.utils.make_grid(final_data[:num_images], normalize=True)
+    plt.figure(figsize=(10, 10))
+    img_grid = torchvision.utils.make_grid(data[:num_images], normalize=True)
     plt.imshow(img_grid.permute(1, 2, 0).cpu().detach().numpy(), cmap='gray')
     plt.axis('off')
 
     # Add title with hyperparameters
-    title = f"EPOCHS={hyperparams[0]}, p0_SIGMA={hyperparams[1]}, GEN_SIGMA={hyperparams[2]}"
+    title = f"EPOCHS={epoch}/{hyperparams[0]}, p0_SIGMA={hyperparams[1]}, GEN_SIGMA={hyperparams[2]}"
     plt.title(title, fontsize=10)
 
-    plt.savefig(f'img/{file}/Final Sample Grid.png')
+    plt.savefig(f'img/{file}/Sample Grid {epoch}.png')
 
