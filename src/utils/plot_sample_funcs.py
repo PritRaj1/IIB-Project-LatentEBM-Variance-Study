@@ -34,7 +34,7 @@ def save_one_sample(final_data, hyperparams, file='Vanilla Pang'):
 
     plt.savefig(f'img/{file}/Final Sample.png')
 
-def save_final_grid(final_data, hyperparams, file='Vanilla Pang', num_images=-1):
+def save_grid(final_data, hyperparams, file='Vanilla Pang', num_images=-1, name='Final Sample Grid'):
     """
     Function to save the final grid of samples from training.
     """
@@ -46,5 +46,5 @@ def save_final_grid(final_data, hyperparams, file='Vanilla Pang', num_images=-1)
     title = f"EPOCHS={hyperparams[0]}, p0_SIGMA={hyperparams[1]}, GEN_SIGMA={hyperparams[2]}"
     plt.title(title, fontsize=10)
 
-    plt.savefig(f'img/{file}/Final Sample Grid.png')
+    plt.savefig(f'img/{file}/{name}.png')
 

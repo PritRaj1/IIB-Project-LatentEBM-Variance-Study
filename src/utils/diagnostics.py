@@ -40,8 +40,8 @@ def plot_hist(Sampler, EBMnet, GENnet, x, file='Vanilla Pang'):
     plt.figure(figsize=(12, 6))
 
     # Plot the histograms on the first subplot
-    sns.histplot(zK_EBM_mean.detach().cpu().numpy(), bins=30, color='red', kde=False, label=r'$p_\alpha(z)$ from EBM')
     sns.histplot(zK_GEN_mean.detach().cpu().numpy(), bins=30, color='blue', kde=False, label=r'$p_\theta(z|x)$ from GEN')
+    sns.histplot(zK_EBM_mean.detach().cpu().numpy(), bins=30, color='red', kde=False, label=r'$p_\alpha(z)$ from EBM')
 
     plt.title(r'Histogram of Prior-posterior Matching')
 
@@ -123,9 +123,9 @@ def plot_temps(Sampler, EBMnet, GENnet, x, epoch, num_plots=5):
 
         # Plot the histograms on the first subplot
         sns.axes_style("darkgrid")
-        sns.histplot(zK_EBM_mean.detach().cpu().numpy(), bins=30, color='red', kde=False, label=r'$p_\alpha(z)$ from EBM', ax=axs[i])
         sns.histplot(zK_GEN_mean.detach().cpu().numpy(), bins=30, color='blue', kde=False, label=r'$p_\theta(z|x)$ from GEN', ax=axs[i])
-
+        sns.histplot(zK_EBM_mean.detach().cpu().numpy(), bins=30, color='red', kde=False, label=r'$p_\alpha(z)$ from EBM', ax=axs[i])
+        
         axs[i].set_title(f"Temperature: {temp:.3f}")
 
     # Add legends and save the figure

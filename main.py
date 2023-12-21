@@ -15,8 +15,8 @@ from src.networks.EBM import tiltedpriorEBM
 from src.networks.GEN import topdownGenerator
 from src.networks.temperedGEN import temperedGenerator
 from src.MCMC_Samplers.langevin import langevin_sampler
-from src.utils.plot_sample_funcs import generate_sample, save_one_sample, save_final_grid
-from src.utils.diagnostics import plot_hist, plot_pdf, plot_temps
+from src.utils.plot_sample_funcs import generate_sample, save_one_sample, save_grid
+from src.utils.diagnostics import plot_hist, plot_pdf
 
 # Set LaTeX font
 rc('font', **{'family': 'serif', 'serif': ['Computer Modern']}, size=14)
@@ -143,6 +143,8 @@ var_axs.set_ylabel("Variance of Variance")
 avg_var = torch.zeros(NUM_EPOCHS, len(temperatures), device=device)
 var_var = torch.zeros(NUM_EPOCHS, len(temperatures), device=device)
 
+stored_samples = torch.zeros(5, 1, 28, 28, device=device)
+
 # Different colour for each temperature
 cmap = plt.get_cmap('jet')
 
@@ -171,9 +173,13 @@ for epoch in tqdm_bar:
 
         writer.add_image(f"Generated Samples -- {FILE} Model", img_grid, global_step=epoch)
 
-        # Plot the expected variance and variance of variances
-        if GENnet.__class__.__name__ == 'temperedGenerator':
-            plot_temps(Sampler, EBMnet, GENnet, batch.to(device), num_plots=5)
+        # Stores 5 generated samples
+        generated_data = generate_sample(GENnet, EBMnet).reshape(-1, 1, 28, 28)[0:5]
+        stored_samples = torch.cat((stored_samples, generated_data), dim=0)
+
+        # # Plot the expected variance and variance of variances
+        # if GENnet.__class__.__name__ == 'temperedGenerator':
+        #     plot_temps(Sampler, EBMnet, GENnet, batch.to(device), num_plots=5)
 
 writer.close()
 
@@ -189,7 +195,10 @@ var_fig.savefig(f'img/{FILE}/Variance of Variance.png')
 
 # Plot the final generated image/grid
 save_one_sample(generated_data, hyperparams=[NUM_EPOCHS, p0_SIGMA, GENERATOR_SIGMA], file=FILE)
-save_final_grid(generated_data, hyperparams=[NUM_EPOCHS, p0_SIGMA, GENERATOR_SIGMA], file=FILE, num_images=32)
+save_grid(generated_data, hyperparams=[NUM_EPOCHS, p0_SIGMA, GENERATOR_SIGMA], file=FILE, num_images=32)
+
+# Plot the stored grid
+save_grid(stored_samples, hyperparams=[NUM_EPOCHS, p0_SIGMA, GENERATOR_SIGMA], file=FILE, num_images=stored_samples.size(0), name='Evolution of Samples')
 
 # Diagnostics
 X = batch.to(device)
