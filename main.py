@@ -27,8 +27,8 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Hyperparameters
 NUM_EPOCHS = 20
-NUM_BATCHES = 50
-NUM_DATA = 5000 # 60000 # Full dataset is 60000 samples
+NUM_BATCHES = 100
+NUM_DATA = 2500 # 60000 # Full dataset is 60000 samples
 BATCH_SIZE = NUM_DATA // NUM_BATCHES
 
 Z_SAMPLES = 100 # Size of latent Z vector
@@ -180,9 +180,6 @@ for epoch in tqdm_bar:
         # # Plot the expected variance and variance of variances
         # if GENnet.__class__.__name__ == 'temperedGenerator':
         #     plot_temps(Sampler, EBMnet, GENnet, batch.to(device), epoch=epoch, num_plots=5)
-
-        # Save the gride of generated samples
-        save_grid(generated_data, hyperparams=[NUM_EPOCHS, p0_SIGMA, GENERATOR_SIGMA], epoch=epoch, file=FILE, num_images=32)
 
 writer.close()
 
