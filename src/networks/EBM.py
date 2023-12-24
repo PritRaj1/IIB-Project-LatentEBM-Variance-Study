@@ -46,4 +46,4 @@ class tiltedpriorEBM(nn.Module):
         en_pos = self(z_posterior.detach())
         en_neg = self(z_prior.detach())
                 
-        return (en_pos - en_neg).mean()
+        return (en_pos - en_neg)

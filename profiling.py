@@ -11,7 +11,7 @@ from src.networks.EBM import tiltedpriorEBM
 from src.networks.GEN import topdownGenerator
 from src.networks.temperedGEN import temperedGenerator
 from src.MCMC_Samplers.langevin import langevin_sampler
-from src.utils.plot_sample_funcs import generate_sample, save_one_sample, save_final_grid
+from src.utils.plotting_functions import generate_sample, save_one_sample, save_final_grid
 from src.utils.diagnostics import plot_hist, plot_pdf
 
 

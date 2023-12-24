@@ -65,7 +65,7 @@ class temperedGenerator(nn.Module):
         x_pred = self.forward(z) + (self.lkhood_sigma * torch.randn_like(x))
         log_lkhood = (torch.norm(x-x_pred, dim=-1)**2) / (2.0 * self.lkhood_sigma * self.lkhood_sigma)
         
-        return log_lkhood.mean()
+        return log_lkhood
     
     def train(self, x, EBM):
         """
@@ -76,10 +76,9 @@ class temperedGenerator(nn.Module):
         - EBM (torch.nn.Module): the energy-based model
 
         Returns:
-        - loss_GEN (float): the loss of the generator
-        - loss_EBM (float): the loss of the energy-based model
-        - expected_var (torch.Tensor): the expected variance of zK_GEN for each temperature
-        - var_var (torch.Tensor): the variance of the variances of zK_GEN for each temperature
+        - loss (list): the losses of the generator and EBM
+        - variances (list): the mean and variance of the posterior sample variances
+        - gradients (list): the sum of gradients in the losses of the generator and EBM
         """
         # Move data to device
         x = x.to(self.device)
@@ -118,5 +117,14 @@ class temperedGenerator(nn.Module):
             expected_var[idx] = torch.mean(variances)
             var_var[idx] = torch.var(variances)
             
-        # 5. Update parameters
-        return update_parameters(loss_GEN, self.optimiser), update_parameters(loss_EBM, EBM.optimiser), expected_var, var_var
+        # 5. Update parameters - get itemised loss, as well as gradients in the losses w.r.t params
+        loss_EBM, lossEBM_grad = update_parameters(loss_EBM, EBM.optimiser)
+        loss_GEN, lossGEN_grad = update_parameters(loss_GEN, self.optimiser)
+
+        # 6. Compute mean and variance of gradients in the loss likelihood 
+        total_grad_loss = lossEBM_grad + lossGEN_grad 
+        mean_grad_loss = torch.mean(total_grad_loss)
+        var_grad_loss = torch.var(total_grad_loss)
+
+        # 7. Return losses, posterior sample variances, and gradients
+        return [loss_GEN, loss_EBM], [[torch.mean(variances)], [torch.var(variances)]], [mean_grad_loss, var_grad_loss]
