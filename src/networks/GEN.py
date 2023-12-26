@@ -31,13 +31,19 @@ class topdownGenerator(nn.Module):
         self.sampler = sampler
 
         self.layers = nn.Sequential(
-            nn.ConvTranspose2d(input_dim, feature_dim*8, kernel_size=7, stride=1, padding=0),
-            nn.BatchNorm2d(feature_dim*8),
+            nn.ConvTranspose2d(input_dim, feature_dim * 16, kernel_size=4, stride=1, padding=0),
+            nn.BatchNorm2d(feature_dim * 16),
             nn.ReLU(),
-            nn.ConvTranspose2d(feature_dim*8, feature_dim*4, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(feature_dim*4),
+            nn.ConvTranspose2d(feature_dim * 16, feature_dim * 8, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(feature_dim * 8),
             nn.ReLU(),
-            nn.ConvTranspose2d(feature_dim*4, output_dim, kernel_size=4, stride=2, padding=1),
+            nn.ConvTranspose2d(feature_dim * 8, feature_dim * 4, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(feature_dim * 4),
+            nn.ReLU(),
+            nn.ConvTranspose2d(feature_dim * 4, feature_dim * 2, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(feature_dim * 2),
+            nn.ReLU(),
+            nn.ConvTranspose2d(feature_dim * 2, output_dim, kernel_size=4, stride=2, padding=1),
             nn.Tanh()
         )
     

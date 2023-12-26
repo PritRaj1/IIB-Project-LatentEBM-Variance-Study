@@ -5,7 +5,7 @@ from torchvision.datasets import MNIST
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 from torchvision import transforms
-from torch.nn import DataParallel
+from torchmetrics.image.fid import FrechetInceptionDistance
 import matplotlib.pyplot as plt
 from matplotlib import rc
 import seaborn as sns
@@ -33,9 +33,11 @@ BATCH_SIZE = NUM_DATA // NUM_BATCHES
 
 Z_SAMPLES = 100 # Size of latent Z vector
 EMB_OUT_SIZE = 1 # Size of output of EBM
-GEN_OUT_CHANNELS = 1 # Size of output of GEN
 GEN_FEATURE_DIM = 128 # Feature dimensions of generator
 EBM_FEATURE_DIM = 64 # Feature dimensions of EBM
+
+CHANNELS = 3 # Size of output of GEN
+IMAGE_DIM = 64
 
 E_LR = 0.0002
 G_LR = 0.001
@@ -59,12 +61,18 @@ print(f"Using {device} for computation.")
 
 # Transforms to apply to dataset. Normalising improves data convergence, numerical stability, and regularisation.
 transform = transforms.Compose([
+    transforms.Resize((64, 64)),  # Resize the images to 64x64
     transforms.ToTensor(),
-    transforms.Normalize((0.5,), (0.5,))
+    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # Normalize the image tensors
 ])
 
-# Load the MNIST dataset
-train_dataset_full = MNIST(root="dataset/", train=True, transform=transform, download=True)
+# Load the CelebA dataset
+train_dataset_full = torchvision.datasets.CelebA(
+    root="dataset/",
+    split="train",
+    transform=transform,
+    download=True
+)
 train_dataset = torch.utils.data.Subset(train_dataset_full, range(0, NUM_DATA))  # Use the first NUM_DATA samples
 loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 
@@ -88,7 +96,7 @@ EBMnet = tiltedpriorEBM(
 GENnet = topdownGenerator(
     input_dim=Z_SAMPLES,
     feature_dim=GEN_FEATURE_DIM, 
-    output_dim=GEN_OUT_CHANNELS, 
+    output_dim=CHANNELS, 
     sampler=Sampler,
     lkhood_sigma=GENERATOR_SIGMA, 
     langevin_steps=G_SAMPLE_STEPS, 
@@ -135,7 +143,7 @@ avg_var_posterior = torch.zeros(NUM_EPOCHS, len(temperatures), device=device)
 var_var_posterior = torch.zeros(NUM_EPOCHS, len(temperatures), device=device)
 
 # Initialise array to store generated samples to plot a nice sample evolution figure
-stored_samples = torch.zeros(5, 1, 28, 28, device=device)
+stored_samples = torch.zeros(5, CHANNELS, IMAGE_DIM, IMAGE_DIM, device=device)
 
 # Different colour for each temperature in the temp variance plot
 cmap = plt.get_cmap('jet')
@@ -143,6 +151,10 @@ cmap = plt.get_cmap('jet')
 # Initialise arrays to store expected/variance in variances of the loss function evaluations
 expected_gradloss = torch.zeros(NUM_EPOCHS, device=device)
 variance_gradloss = torch.zeros(NUM_EPOCHS, device=device)
+
+# Initialise array to store FID scores
+FID_scores = []
+fid = FrechetInceptionDistance(feature=64).to(device)
 
 for epoch in tqdm_bar:
     # Running loss
@@ -186,13 +198,18 @@ for epoch in tqdm_bar:
     variance_gradloss[epoch] = torch.var(lossLoss_var) # Batch variance of variances of zK_GEN for each temperature
 
     if (epoch % SAMPLE_BREAK == 0 or epoch == NUM_EPOCHS):
-        generated_data = generate_sample(GENnet, EBMnet).reshape(-1, 1, 28, 28)
+        generated_data = generate_sample(GENnet, EBMnet).reshape(-1, CHANNELS, IMAGE_DIM, IMAGE_DIM)
         img_grid = torchvision.utils.make_grid(generated_data, normalize=True)
 
         writer.add_image(f"Generated Samples -- {FILE} Model", img_grid, global_step=epoch)
 
         # Stores 5 generated samples
-        stored_samples = torch.cat((stored_samples, generated_data[0:5]), dim=0)
+        stored_samples = torch.cat((stored_samples, generated_data[0:9]), dim=0)
+
+        # Calculate FID score
+        fid.update(batch.to(device).to(torch.uint8).reshape(-1, CHANNELS, IMAGE_DIM, IMAGE_DIM), real=True)
+        fid.update(generated_data.to(torch.uint8), real=False)
+        FID_scores.append((epoch,fid.compute().cpu().detach().numpy()))
 
         # # Plot the expected variance and variance of variances
         # if GENnet.__class__.__name__ == 'temperedGenerator':
@@ -217,5 +234,12 @@ save_grid(stored_samples, hyperparams=[NUM_EPOCHS, p0_SIGMA, GENERATOR_SIGMA], e
 X = batch.to(device)
 plot_hist(Sampler, EBMnet, GENnet, X, file=FILE)
 plot_pdf(Sampler, EBMnet, GENnet, batch.to(device), file=FILE)
+
+plt.figure()
+plt.plot(FID_scores)
+plt.xlabel('Epoch')
+plt.ylabel('FID Score')
+plt.title('FID Score Evolution')
+plt.savefig(f'../figures/{FILE}/FID Score Evolution.png', dpi=300)
 
 
