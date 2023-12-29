@@ -3,13 +3,11 @@ import torchvision
 from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST
 from tqdm import tqdm
-from torch.utils.tensorboard import SummaryWriter
 from torchvision import transforms
-from torch.nn import DataParallel
-import matplotlib.pyplot as plt
 import optuna
 from matplotlib import rc
 import seaborn as sns
+from torchmetrics.image.fid import FrechetInceptionDistance
 
 import sys; sys.path.append('..')
 from src.networks.EBM import tiltedpriorEBM
@@ -17,7 +15,6 @@ from src.networks.GEN import topdownGenerator
 from src.networks.temperedGEN import temperedGenerator
 from src.MCMC_Samplers.langevin import langevin_sampler
 from src.utils.plotting_functions import generate_sample
-from src.utils.helper_functions import calculate_fid
 
 # Constant hyperparameters
 NUM_EPOCHS = 200
@@ -34,6 +31,9 @@ EBM_FEATURE_DIM = 64 # Feature dimensions of EBM
 E_SAMPLE_STEPS = 40
 G_SAMPLE_STEPS = 40
 
+CHANNELS = 3 # Size of output of GEN
+IMAGE_DIM = 64
+
 TEMP_SCHEDULE = 'uniform'
 NUM_TEMPS = 10
 
@@ -44,14 +44,22 @@ print(f"Using {device} for computation.")
 
 # Transforms to apply to dataset. Normalising improves data convergence, numerical stability, and regularisation.
 transform = transforms.Compose([
+    transforms.Resize((64, 64)),  # Resize the images to 64x64
     transforms.ToTensor(),
-    transforms.Normalize((0.5,), (0.5,))
+    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # Normalize the image tensors
 ])
 
-# Load the MNIST dataset
-train_dataset_full = MNIST(root="dataset/", train=True, transform=transform, download=True)
+# Load the CelebA dataset
+train_dataset_full = torchvision.datasets.CelebA(
+    root="dataset/",
+    split="train",
+    transform=transform,
+    download=True
+)
 train_dataset = torch.utils.data.Subset(train_dataset_full, range(0, NUM_DATA))  # Use the first NUM_DATA samples
 loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+
+fid = FrechetInceptionDistance(feature=64).to(device) # FID metric
 
 def objective(trial):
     EBM_learning_rate = trial.suggest_float('learning_rate', 1e-5, 1e-2, log=True)
@@ -104,7 +112,10 @@ def objective(trial):
     
     generated_data = generate_sample(GENnet, EBMnet).reshape(-1, 1, 28, 28)
 
-    FID = calculate_fid(batch.to(device).reshape(-1, 1, 28, 28), generated_data)
+    # Calculate FID score
+    fid.update(batch.to(device).to(torch.uint8).reshape(-1, CHANNELS, IMAGE_DIM, IMAGE_DIM), real=True)
+    fid.update(generated_data.to(torch.uint8), real=False)
+    FID = fid.compute().cpu().detach().numpy()
 
     return FID
 

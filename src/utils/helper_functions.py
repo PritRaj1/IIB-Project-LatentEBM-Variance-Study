@@ -1,4 +1,5 @@
 import torch
+import os
 
 def sample_zK(x, GENnet, EBMnet):
     """
@@ -20,7 +21,7 @@ def update_parameters(loss, optimiser):
     # Save the gradients of the loss for each sample in the batch
     loss_gradients = torch.zeros_like(loss)
     for batch_idx, l in enumerate(loss):
-        grad_l = torch.autograd.grad(-l.mean(), optimiser.param_groups[0]['params'], retain_graph=True)[0]
+        grad_l = torch.autograd.grad(l.mean(), optimiser.param_groups[0]['params'], retain_graph=True)[0]
         loss_gradients[batch_idx] = torch.norm(grad_l)
     
     # Update the parameters
@@ -31,3 +32,18 @@ def update_parameters(loss, optimiser):
     
     # Loss gradients is a tensor of size batch_size, contatining the gradients of the loss for each sample in the batch
     return loss.item(), loss_gradients
+
+def create_results_directory(file, subfile):
+    """
+    Function to create the results directory if it doesn't exist.
+    """
+    # Make sure files exist, if not create them
+    if not os.path.exists(f'results/{file}/'):
+        os.makedirs(f'results/{file}/')
+    if not os.path.exists(f'results/{file}/{subfile}/'):
+        os.makedirs(f'results/{file}/{subfile}/')
+
+    if not os.path.exists(f'img/{file}/'):
+        os.makedirs(f'img/{file}/')
+    if not os.path.exists(f'img/{file}/{subfile}/'):
+        os.makedirs(f'img/{file}/{subfile}/')

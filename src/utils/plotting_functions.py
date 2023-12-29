@@ -10,6 +10,9 @@ rc('text', usetex=True)
 sns.set_style("darkgrid")
 
 def generate_sample(GENnet, EBMnet):
+    """
+    Function to generate a batch of samples from the model.
+    """
     z = GENnet.sampler.sample_p0()
     z.view(z.size(0), -1, 1, 1)
     z_prior = GENnet.sampler.get_sample(z, None, EBMnet, None)
@@ -34,9 +37,9 @@ def save_one_sample(final_data, hyperparams, file='Vanilla Pang'):
 
     plt.savefig(f'img/{file}/Final Sample.png')
 
-def save_grid(data, hyperparams, epoch, file='Vanilla Pang', num_images=-1, name='Final Sample Grid'):
+def save_grid(data, hyperparams, epoch, file='Vanilla Pang', subfile=None, num_images=-1, name='Final Sample Grid'):
     """
-    Function to save the final grid of samples from training.
+    Function to save a grid of samples from training.
     """
     plt.figure(figsize=(10, 10))
     img_grid = torchvision.utils.make_grid(data[:num_images], normalize=True)
@@ -47,9 +50,16 @@ def save_grid(data, hyperparams, epoch, file='Vanilla Pang', num_images=-1, name
     title = f"EPOCHS={epoch}/{hyperparams[0]}, p0_SIGMA={hyperparams[1]}, GEN_SIGMA={hyperparams[2]}"
     plt.title(title, fontsize=10)
 
-    plt.savefig(f'img/{file}/{name}.png')
+
+    if subfile is None:
+        plt.savefig(f'img/{file}/{name}.png')
+    else:
+        plt.savefig(f'img/{file}/{subfile}/{name}.png')
 
 def plot_posterior_metrics(avg_var_posterior, var_var_posterior, temperatures, cmap, FILE):
+    """
+    Function to plot the expected variance and variance of variances of zK_GEN for each temperature.
+    """
     # Initialise plots for expected variance and variance of variances in ZK_GEN, the posterior samples
     avg_fig, avg_axs = plt.subplots(1, 1, figsize=(18, 6))
     avg_fig.suptitle("Expected Variance of Generated Samples")
@@ -72,6 +82,9 @@ def plot_posterior_metrics(avg_var_posterior, var_var_posterior, temperatures, c
     var_fig.savefig(f'img/{FILE}/Variance of Variance.png')
 
 def plot_gradLoss_metrics(expected_gradLoss, variance_gradLoss, FILE):
+    """
+    Function to plot the expected variance and variance of variances of the marginal log-likelihood.
+    """
     # Initialise plots for expected variance and variance of variances in grad_loss
     avg_fig, avg_axs = plt.subplots(1, 1, figsize=(18, 6))
     avg_fig.suptitle(r"Expected Variance of Gradient in Loss" + "\n" + 

@@ -26,7 +26,7 @@ sns.set_style("darkgrid")
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Hyperparameters
-NUM_EPOCHS = 200
+NUM_EPOCHS = 100
 NUM_BATCHES = 100
 NUM_DATA = 2500 # 60000 # Full MNIST dataset is 60000 samples
 BATCH_SIZE = NUM_DATA // NUM_BATCHES
@@ -107,7 +107,7 @@ GENnet = topdownGenerator(
 # GENnet = temperedGenerator(
 #     input_dim=Z_SAMPLES,
 #     feature_dim=GEN_FEATURE_DIM, 
-#     output_dim=GEN_OUT_CHANNELS, 
+#     output_dim=CHANNELS, 
 #     sampler=Sampler,
 #     lkhood_sigma=GENERATOR_SIGMA,
 #     langevin_steps=G_SAMPLE_STEPS,
@@ -129,6 +129,7 @@ GENnet.optimiser = GENoptimiser
 
 print(f"Training {GENnet.__class__.__name__} model for {NUM_EPOCHS} epochs with {NUM_BATCHES} batches per epoch.")
 
+# Initialise progress bar and tensorboard writer
 tqdm_bar = tqdm(range(NUM_EPOCHS))
 writer = SummaryWriter(f"runs/{FILE}")
 
@@ -143,7 +144,7 @@ avg_var_posterior = torch.zeros(NUM_EPOCHS, len(temperatures), device=device)
 var_var_posterior = torch.zeros(NUM_EPOCHS, len(temperatures), device=device)
 
 # Initialise array to store generated samples to plot a nice sample evolution figure
-stored_samples = torch.zeros(5, CHANNELS, IMAGE_DIM, IMAGE_DIM, device=device)
+stored_samples = torch.zeros(0, CHANNELS, IMAGE_DIM, IMAGE_DIM, device=device)
 
 # Different colour for each temperature in the temp variance plot
 cmap = plt.get_cmap('jet')
@@ -154,7 +155,7 @@ variance_gradloss = torch.zeros(NUM_EPOCHS, device=device)
 
 # Initialise array to store FID scores
 FID_scores = []
-fid = FrechetInceptionDistance(feature=64).to(device)
+fid = FrechetInceptionDistance(feature=64).to(device) # FID metric
 
 for epoch in tqdm_bar:
     # Running loss
@@ -165,8 +166,8 @@ for epoch in tqdm_bar:
     sum_batch_avg = torch.zeros(len(temperatures), device=device)
     sum_batch_var = torch.zeros(len(temperatures), device=device)
 
-    lossLoss_avg = torch.zeros(NUM_BATCHES, device=device)
-    lossLoss_var = torch.zeros(NUM_BATCHES, device=device)
+    gradLoss_avg = torch.zeros(NUM_BATCHES, device=device)
+    gradLoss_var = torch.zeros(NUM_BATCHES, device=device)
 
     for batch_idx, (batch, _) in enumerate(loader): 
 
@@ -182,20 +183,22 @@ for epoch in tqdm_bar:
         sum_batch_var += torch.tensor(posterior_metrics[1], device=device).clone().detach()
 
         # Update running averages/variances of loss function evaluations
-        lossLoss_avg[batch_idx] = loss_gradient_metrics[0]
-        lossLoss_var[batch_idx] = loss_gradient_metrics[1]
+        gradLoss_avg[batch_idx] = loss_gradient_metrics[0]
+        gradLoss_var[batch_idx] = loss_gradient_metrics[1]
         
         tqdm_bar.set_description(f"Epoch {epoch}/{NUM_EPOCHS}; Batch {batch_idx}/{NUM_BATCHES}; EBM-Loss: {EBMtotal_loss / (batch_idx + 1):.4f} GEN-Loss: {GENtotal_loss / (batch_idx + 1):.4f}")
 
-        # For speedy testing - comment out when serious
+        # # For speedy testing - comment out when serious
         # if batch_idx > 5:
         #     break
 
+    # Posterior sample variances
     avg_var_posterior[epoch] = sum_batch_avg / NUM_BATCHES # Batch average expected variance of zK_GEN for each temperature
     var_var_posterior[epoch] = sum_batch_var / NUM_BATCHES # Batch average variance of variances of zK_GEN for each temperature
 
-    expected_gradloss[epoch] = torch.mean(lossLoss_var) # Batch expected variance of zK_GEN for each temperature
-    variance_gradloss[epoch] = torch.var(lossLoss_var) # Batch variance of variances of zK_GEN for each temperature
+    # Loss function evaluations
+    expected_gradloss[epoch] = torch.mean(gradLoss_var) # Batch expected variance of zK_GEN for each temperature
+    variance_gradloss[epoch] = torch.var(gradLoss_var) # Batch variance of variances of zK_GEN for each temperature
 
     if (epoch % SAMPLE_BREAK == 0 or epoch == NUM_EPOCHS):
         generated_data = generate_sample(GENnet, EBMnet).reshape(-1, CHANNELS, IMAGE_DIM, IMAGE_DIM)
@@ -236,10 +239,10 @@ plot_hist(Sampler, EBMnet, GENnet, X, file=FILE)
 plot_pdf(Sampler, EBMnet, GENnet, batch.to(device), file=FILE)
 
 plt.figure()
-plt.plot(FID_scores)
+plt.plot(FID_scores[0], FID_scores[1])
 plt.xlabel('Epoch')
 plt.ylabel('FID Score')
 plt.title('FID Score Evolution')
-plt.savefig(f'../figures/{FILE}/FID Score Evolution.png', dpi=300)
+plt.savefig(f'img/{FILE}/FID Score Evolution.png', dpi=300)
 
 

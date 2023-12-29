@@ -33,6 +33,9 @@ class temperedGenerator(nn.Module):
         self.num_replicas = num_replicas
         self.device = device
 
+        # Make sure that the temperature schedule is valid
+        assert temp_schedule_power >= 1, "Temperature schedule power must be >= 1."
+
         # Init temperature schedule: t_i = (i / (num_replicas - 1))^p
         self.temp_schedule = torch.tensor(np.linspace(0, 1, num_replicas)**temp_schedule_power, device=device)
         self.current_temp = self.temp_schedule[0]
