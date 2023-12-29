@@ -1,4 +1,6 @@
 # .gitignore
 runs/
 dataset/
+GENnet.pth
+EBMnet.pth
 ```
