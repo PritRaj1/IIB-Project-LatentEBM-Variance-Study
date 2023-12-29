@@ -1,6 +1,11 @@
 # .gitignore
 runs/
 dataset/
-GENnet.pth
+results/Vanilla Pang/Vanilla/EBMnet.pth
+results/Vanilla Pang/Vanilla/GENnet.pth
+results/Power Posteriors Alt/p=1/EBMnet.pth
+results/Power Posteriors Alt/p=1/GENnet.pth
+results/Power Posteriors Alt/p=2/EBMnet.pth
+results/Power Posteriors Alt/p=2/GENnet.pth
 EBMnet.pth
 ```
