@@ -93,29 +93,29 @@ EBMnet = tiltedpriorEBM(
     langevin_s=E_STEP
 ).to(device)
 
-GENnet = topdownGenerator(
-    input_dim=Z_SAMPLES,
-    feature_dim=GEN_FEATURE_DIM, 
-    output_dim=CHANNELS, 
-    sampler=Sampler,
-    lkhood_sigma=GENERATOR_SIGMA, 
-    langevin_steps=G_SAMPLE_STEPS, 
-    langevin_s=G_STEP,
-    device = device
-).to(device)
-
-# GENnet = temperedGenerator(
+# GENnet = topdownGenerator(
 #     input_dim=Z_SAMPLES,
 #     feature_dim=GEN_FEATURE_DIM, 
 #     output_dim=CHANNELS, 
 #     sampler=Sampler,
-#     lkhood_sigma=GENERATOR_SIGMA,
-#     langevin_steps=G_SAMPLE_STEPS,
+#     lkhood_sigma=GENERATOR_SIGMA, 
+#     langevin_steps=G_SAMPLE_STEPS, 
 #     langevin_s=G_STEP,
-#     num_replicas=NUM_TEMPS,
-#     temp_schedule_power=1,
-#     device=device
+#     device = device
 # ).to(device)
+
+GENnet = temperedGenerator(
+    input_dim=Z_SAMPLES,
+    feature_dim=GEN_FEATURE_DIM, 
+    output_dim=CHANNELS, 
+    sampler=Sampler,
+    lkhood_sigma=GENERATOR_SIGMA,
+    langevin_steps=G_SAMPLE_STEPS,
+    langevin_s=G_STEP,
+    num_replicas=NUM_TEMPS,
+    temp_schedule_power=1,
+    device=device
+).to(device)
 
 # File for saving images
 print(f"Using {GENnet.__class__.__name__} model.")
@@ -200,19 +200,19 @@ for epoch in tqdm_bar:
     expected_gradloss[epoch] = torch.mean(gradLoss_var) # Batch expected variance of zK_GEN for each temperature
     variance_gradloss[epoch] = torch.var(gradLoss_var) # Batch variance of variances of zK_GEN for each temperature
 
-    if (epoch % SAMPLE_BREAK == 0 or epoch == NUM_EPOCHS):
-        generated_data = generate_sample(GENnet, EBMnet).reshape(-1, CHANNELS, IMAGE_DIM, IMAGE_DIM)
-        img_grid = torchvision.utils.make_grid(generated_data, normalize=True)
+    #if (epoch % SAMPLE_BREAK == 0 or epoch == NUM_EPOCHS):
+    generated_data = generate_sample(GENnet, EBMnet).reshape(-1, CHANNELS, IMAGE_DIM, IMAGE_DIM)
+    img_grid = torchvision.utils.make_grid(generated_data, normalize=True)
 
-        writer.add_image(f"Generated Samples -- {FILE} Model", img_grid, global_step=epoch)
+    writer.add_image(f"Generated Samples -- {FILE} Model", img_grid, global_step=epoch)
 
-        # Stores 5 generated samples
-        stored_samples = torch.cat((stored_samples, generated_data[0:9]), dim=0)
+    # Stores 5 generated samples
+    stored_samples = torch.cat((stored_samples, generated_data[0:1]), dim=0)
 
-        # Calculate FID score
-        fid.update(batch.to(device).to(torch.uint8).reshape(-1, CHANNELS, IMAGE_DIM, IMAGE_DIM), real=True)
-        fid.update(generated_data.to(torch.uint8), real=False)
-        FID_scores.append((epoch,fid.compute().cpu().detach().numpy()))
+    # Calculate FID score
+    fid.update(batch.to(device).to(torch.uint8).reshape(-1, CHANNELS, IMAGE_DIM, IMAGE_DIM), real=True)
+    fid.update(generated_data.to(torch.uint8), real=False)
+    FID_scores.append((epoch,fid.compute().cpu().detach().numpy()))
 
         # # Plot the expected variance and variance of variances
         # if GENnet.__class__.__name__ == 'temperedGenerator':
