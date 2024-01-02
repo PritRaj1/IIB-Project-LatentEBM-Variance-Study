@@ -1,5 +1,6 @@
 import torch
 import matplotlib.pyplot as plt
+from matplotlib import rc
 import seaborn as sns
 
 # Set plot styling
@@ -36,9 +37,9 @@ FIDs = [
 ]
 
 plot_titles=[
-    r"\mathrm{E}_{p(\mathbf{x})}\left[-\log\left(p(\mathbf{\tilde{x}}|\mathbf{\theta})\right)\right]", # loss
-    r"\mathrm{Var}_{p(\mathbf{x})}\left[mathrm{Var}_{p(\mathbf{x})}\left[\nabla_{\mathbf{\theta}}-\log\left(p(\mathbf{\tilde{x}}|\mathbf{\theta})\right)\right]\right]", # variance
-    r"\mathrm{FID}_{p(\mathbf{x})}\left[p(\mathbf{\tilde{x}}|\mathbf{\theta})\right]" # FID
+    r"$\mathrm{E}_{p(\mathbf{x})}\left[-\log\left(p(\mathbf{\tilde{x}}|\mathbf{\theta})\right)\right]$", # loss
+    r"$\mathrm{Var}_{p(\mathbf{x})}\left[\mathrm{Var}_{p(\mathbf{x})}\left[\nabla_{\mathbf{\theta}}\left(-\log\left(p(\mathbf{\tilde{x}}|\mathbf{\theta})\right)\right)\right]\right]$", # variance
+    r"$\mathrm{FID}_{p(\mathbf{x})}\left[p(\mathbf{\tilde{x}}|\mathbf{\theta})\right]$" # FID
 ]
 
 plot_labels=[
@@ -60,9 +61,9 @@ def plot_results(results, plot_title, plot_labels, save_name):
     """
     Plot results from technical milestone experiments.
     """
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=(15, 6))
     for i in range(len(results)):
-        plt.loglog(results[i], label=plot_labels[i])
+        plt.loglog(results[i].cpu().numpy(), label=plot_labels[i])
     plt.xlabel("Epoch")
     plt.ylabel("Value")
     plt.legend()
@@ -71,7 +72,7 @@ def plot_results(results, plot_title, plot_labels, save_name):
     plt.close()
 
 for result_idx, results in enumerate([expected_loss, variances, FIDs]):
-    plot_results(results, plot_titles[i], plot_labels, f"results/{file_names[i]}.png")
+    plot_results(results, plot_titles[result_idx], plot_labels, f"results/{file_names[result_idx]}.png")
 
 
         
