@@ -10,14 +10,18 @@ class topdownGenerator(nn.Module):
 
     Args:
     - input_dim (int): the dimensionality of the input noise vector
-    - output_dim (int): the dimensionality of the output data
-    - lkhood_sigma (float): the standard deviation of the likelihood distribution
-    - langevin_steps (int): the number of steps the langevin sampler takes
-    - langevin_s (float): the step size of the langevin sampler
+    - feature_dim (int): the dimensionality of the feature space
+    - output_dim (int): the dimensionality of the output
+    - sampler (function): the sampler object to use
+    - lkhood_sigma (float): the standard deviation of the likelihood distribution (p(x | z))
+    - langevin_steps (int): the number of Langevin steps to take
+    - langevin_s (float): the step size of the Langevin sampler
 
     Methods:
-    - forward(z): generates a sample from the generator
-    - grad_log_fn(z, x, EBM_model): computes the gradient of the log posterior: log[p(x | z) * p(z)] w.r.t. z
+    - forward(z): computes the output of the generator
+    - grad_log_fn(z, x, model): computes the gradient of the log posterior: log[p(z | x)] w.r.t. z
+    - loss_fn(x, z): computes the generatior loss
+    - train(x, EBM): trains the whole model, EBM and Generator inclusive
     """
     def __init__(self, input_dim, feature_dim, output_dim, sampler, lkhood_sigma, langevin_steps=20, langevin_s=0.1, device='cuda'):
         super().__init__()

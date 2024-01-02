@@ -1,3 +1,10 @@
+"""
+This file is used for profiling. Given the computational requirements of the model, 
+(especially with thermodynamic integration involved), it is important to monitor
+the memory usage and compute time of the model. This file is used to profile the
+model and generate a tensorboard log of the results.
+"""
+
 import torch
 import torchvision
 from torch.utils.data import DataLoader
@@ -53,10 +60,17 @@ transform = transforms.Compose([
     transforms.Normalize((0.5,), (0.5,))
 ])
 
-# Load the MNIST dataset
-train_dataset = MNIST(root="dataset/", transform=transform, download=True)
+# Load the CelebA dataset
+train_dataset_full = torchvision.datasets.CelebA(
+    root="dataset/",
+    split="train",
+    transform=transform,
+    download=True
+)
+train_dataset = torch.utils.data.Subset(train_dataset_full, range(0, NUM_DATA))  # Use the first NUM_DATA samples
 loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 
+# Initialise the model
 Sampler = langevin_sampler(
     p0_sigma=p0_SIGMA, 
     batch_size=BATCH_SIZE, 
@@ -100,6 +114,7 @@ GENnet = topdownGenerator(
 print(f"Using {GENnet.__class__.__name__} model.")
 FILE = 'Power Posteriors Alt' if GENnet.__class__.__name__ == 'temperedGenerator' else 'Vanilla Pang'
 
+# Initialise optimisers
 EBMoptimiser = torch.optim.Adam(EBMnet.parameters(), lr=E_LR)
 EBMnet.optimiser = EBMoptimiser
 GENoptimiser = torch.optim.Adam(GENnet.parameters(), lr=G_LR)
@@ -121,9 +136,9 @@ with torch.profiler.profile(
 
         for batch_idx, (batch, _) in enumerate(loader): 
 
-            lossG, lossE = GENnet.train(batch, EBMnet)
-            EBMtotal_loss += lossE
-            GENtotal_loss += lossG
+            losses, _, _ = GENnet.train(batch, EBMnet)
+            EBMtotal_loss += losses[0]
+            GENtotal_loss += losses[1]
 
             prof.step()
             if batch_idx >= 5:

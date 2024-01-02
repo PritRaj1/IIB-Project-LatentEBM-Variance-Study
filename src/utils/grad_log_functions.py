@@ -9,7 +9,7 @@ def EBM_grad_log_fn(EBM, z):
         f_z = EBM.forward(z)
         grad_f_z = torch.autograd.grad(f_z.sum(), z, create_graph=True)[0] # Gradient of f_a(z)
         
-        return grad_f_z - (z / (EBM.p0_sigma * EBM.p0_sigma)) # This is GRAD log[p_a(x)])
+        return grad_f_z - (z / (EBM.p0_sigma * EBM.p0_sigma)) # This is GRAD log[p_a(z)])
 
 def vanillaGEN_grad_log_fn(GEN, z, x, EBM_model):
         """

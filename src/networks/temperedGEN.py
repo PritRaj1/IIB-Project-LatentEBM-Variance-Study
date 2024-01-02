@@ -23,6 +23,8 @@ class temperedGenerator(nn.Module):
     - forward(z): generates a sample from the generator
     - grad_log_fn(z, x, EBM_model): computes the gradient of the log posterior: log[p(x | z)^t * p(z)] w.r.t. z
     - temperature_schedule(schedule_name, num_temps): sets the temperature schedule
+    - loss_fn(x, z): computes the generation loss
+    - train(x, EBM): trains the whole model, EBM and Generator inclusive
     """
     def __init__(self, input_dim, feature_dim, output_dim, sampler, lkhood_sigma, langevin_steps=20, langevin_s=0.1, num_replicas=10, temp_schedule_power=1, device='cuda'):
         super().__init__()

@@ -9,14 +9,16 @@ class tiltedpriorEBM(nn.Module):
 
     Args:
     - input_dim (int): the dimensionality of the input noise vector
-    - output_dim (int): the dimensionality of the output data
-    - p0_sigma (float): the standard deviation of the initial prior distribution, z0 ~ N(0, p0_sigma^2 * I)
-    - langevin_steps (int): the number of steps the langevin sampler takes
-    - langevin_s (float): the step size of the langevin sampler
+    - feature_dim (int): the dimensionality of the feature space
+    - output_dim (int): the dimensionality of the output
+    - p0_sigma (float): the standard deviation of the prior distribution
+    - langevin_steps (int): the number of Langevin steps to take
+    - langevin_s (float): the step size of the Langevin sampler
 
     Methods:
     - forward(z): computes the energy of the input z
-    - grad_log_fn(z, x, model): computes the gradient of the log posterior: log[p(x | z) * p(z)] w.r.t. z
+    - grad_log_fn(z, x, model): computes the gradient of the log prior: log[p_a(z)] w.r.t. z
+    - loss_fn(z_prior, z_posterior): computes the loss function based on the prior and posterior energies
     """
     def __init__(self, input_dim, feature_dim, output_dim, p0_sigma, langevin_steps=20, langevin_s=0.4):
         super().__init__()
