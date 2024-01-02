@@ -1,3 +1,10 @@
+"""
+File to collect variances in grad loss for different setups, as part 
+of the technical milestone report. The variances are stored as .pth objects
+ready for plotting in TMR_plots.py
+"""
+
+
 import torch
 import torchvision
 from torch.utils.data import DataLoader
