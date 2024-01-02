@@ -52,9 +52,9 @@ plot_labels=[
 ]
 
 file_names=[
-    "loss",
-    "variance",
-    "FID"
+    "loss (log)",
+    "variance (log)",
+    "FID (log)"
 ]
 
 def plot_results(results, plot_title, plot_labels, save_name):
@@ -63,7 +63,7 @@ def plot_results(results, plot_title, plot_labels, save_name):
     """
     plt.figure(figsize=(15, 6))
     for i in range(len(results)):
-        plt.plot(results[i].cpu().numpy(), label=plot_labels[i])
+        plt.loglog(results[i].cpu().numpy(), label=plot_labels[i])
     plt.xlabel("Epoch")
     plt.ylabel("Value")
     plt.legend()
