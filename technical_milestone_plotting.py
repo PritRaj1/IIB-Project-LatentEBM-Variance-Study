@@ -37,9 +37,9 @@ FIDs = [
 ]
 
 plot_titles=[
-    r"$\mathrm{E}_{p(\mathbf{x})}\left[-\log\left(p(\mathbf{\tilde{x}}|\mathbf{\theta})\right)\right]$", # loss
-    r"$\mathrm{Var}_{p(\mathbf{x})}\left[\mathrm{Var}_{p(\mathbf{x})}\left[\nabla_{\mathbf{\theta}}\left(-\log\left(p(\mathbf{\tilde{x}}|\mathbf{\theta})\right)\right)\right]\right]$", # variance
-    r"$\mathrm{FID}_{p(\mathbf{x})}\left[p(\mathbf{\tilde{x}}|\mathbf{\theta})\right]$" # FID
+    r"$\mathrm{E}_{p(\mathbf{x, z})}\left[-\log\left(p(\mathbf{\tilde{x}}|\mathrm{\theta})\right)\right]$", # loss
+    r"$\mathrm{Var}_{p(\mathbf{x, z})}\left[\mathrm{Var}_{p(\mathbf{x, z})}\left[\nabla_{\mathrm{\theta}}\left(-\log\left(p(\mathbf{\tilde{x}}|\mathbf{\theta})\right)\right)\right]\right]$", # variance
+    r"$\mathrm{FID}_{p(\mathbf{x, z})}\left[p(\mathbf{\tilde{x}}|\mathrm{\theta})\right]$" # FID
 ]
 
 plot_labels=[
