@@ -26,7 +26,7 @@ sns.set_style("darkgrid")
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Hyperparameters
-NUM_EPOCHS = 25
+NUM_EPOCHS = 32
 NUM_BATCHES = 100
 NUM_DATA = 2500 # 60000 # Full MNIST dataset is 60000 samples
 BATCH_SIZE = NUM_DATA // NUM_BATCHES
