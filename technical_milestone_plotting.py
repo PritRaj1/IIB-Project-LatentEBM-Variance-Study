@@ -66,19 +66,19 @@ plot_labels=[
 ]
 
 file_names=[
-    "loss",
-    "expected variance",
-    "variance",
-    "FID"
+    "loss (log)",
+    "expected variance (log)",
+    "variance (log)",
+    "FID (log)"
 ]
 
 def plot_results(results, plot_title, plot_labels, save_name):
     """
     Plot results from technical milestone experiments.
     """
-    plt.figure(figsize=(15, 6))
+    plt.figure(figsize=(10, 8))
     for i in range(len(results)):
-        plt.plot(results[i].cpu().numpy(), label=plot_labels[i])
+        plt.loglog(results[i].cpu().numpy(), label=plot_labels[i])
     plt.xlabel("Epoch")
     plt.ylabel("Value")
     plt.legend()
@@ -86,8 +86,20 @@ def plot_results(results, plot_title, plot_labels, save_name):
     plt.savefig(save_name)
     plt.close()
 
+
+
+
+
 for result_idx, results in enumerate([expected_loss, expected_variances, variances, FIDs]):
     plot_results(results, plot_titles[result_idx], plot_labels, f"results/{file_names[result_idx]}.png")
 
-
-        
+plt.figure(figsize=(10, 8))
+for idx, label in enumerate(plot_labels):
+    plt.loglog(expected_variances[idx].cpu().numpy(), FIDs[idx].cpu().numpy(), marker='x', label=label, linewidth=0)
+    #plt.plot(variances[idx].cpu().numpy(), FIDs[idx].cpu().numpy(), 'k-', linewidth=0.5)
+plt.xlabel(r"$\mathrm{E}_{p(\mathbf{x, z})}\left[\mathrm{Var}_{p(\mathbf{x, z})}\left[\nabla_{\mathrm{\theta}}\left(-\log\left(p(\mathbf{\tilde{x}}|\mathbf{\theta})\right)\right)\right]\right]$")
+plt.ylabel(r"$\mathrm{FID}_{p(\mathbf{x, z})}\left[p(\mathbf{\tilde{x}}|\mathrm{\theta})\right]$")
+plt.legend()
+plt.title(r"FID vs. Mean Variance")
+plt.savefig("results/FID_vs_variance.png")
+plt.close()
